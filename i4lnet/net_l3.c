@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.2 2003/08/27 10:07:05 kkeil Exp $
+/* $Id: net_l3.c,v 1.0.2.3 2003/08/27 10:10:05 kkeil Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.2 $";
+const char *l3_revision = "$Revision: 1.0.2.3 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -1876,6 +1876,7 @@ l3dss1_retrack_req(layer3_proc_t *pc, int pr, void *arg)
 
 	if (pc->hold_state != HOLDAUX_RETR_IND)
 		return;
+	pc->hold_state = HOLDAUX_IDLE;
 	if (rack) {
 		MsgStart(pc, MT_RETRIEVE_ACKNOWLEDGE);
 		if (rack->CHANNEL_ID)
