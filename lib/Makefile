@@ -13,6 +13,7 @@ status.o : status.c ../include/mISDNlib.h
 
 clean:
 	rm -f *.o *~ DEADJOE
+	rm -f libmISDN.a
 
 distclean: clean
 	rm -f *.a

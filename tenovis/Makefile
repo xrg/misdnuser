@@ -28,6 +28,7 @@ subdirs:
 clean:
 	make TARGET=$@ subdirs
 	rm -f *.o *~ DEADJOE
+	rm -f testlib tstlib
 
 distclean: clean
 	make TARGET=$@ subdirs

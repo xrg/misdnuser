@@ -27,6 +27,7 @@ logger.o: logger.c $(LIBINCL)
 
 clean:
 	rm -f *.o *~ DEADJOE
+	rm -f loadfirm logger testcon testcon_l2 testnet
 
 distclean: clean
 	rm -f *.a $(PROGS)

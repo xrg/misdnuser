@@ -166,7 +166,7 @@ clear_bc(bchannel_t *bc)
 }
 
 static int
-do_b_activated(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg) {
+do_b_activated(bchannel_t *bc, mISDNuser_head_t *hh, msg_t *msg) {
 	dprint(DBGM_BC,"%s:ch%d state(%d/%d) Flags(%x) smsg(%p)\n", __FUNCTION__,
 		bc->channel, bc->cstate, bc->bstate, bc->Flags, bc->smsg);
 	clear_ibuffer(bc->rbuf);
@@ -181,7 +181,7 @@ do_b_activated(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg) {
 }
 
 static int
-do_b_deactivated(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg) {
+do_b_deactivated(bchannel_t *bc, mISDNuser_head_t *hh, msg_t *msg) {
 	dprint(DBGM_BC,"%s:ch%d Flags(%x) smsg(%p)\n", __FUNCTION__,
 		bc->channel, bc->Flags, bc->smsg);
 	bc_cleanup(bc);
@@ -190,7 +190,7 @@ do_b_deactivated(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg) {
 }
 
 static int
-do_b_setup_conf(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
+do_b_setup_conf(bchannel_t *bc, mISDNuser_head_t *hh, msg_t *msg)
 {
 	int	*addr;
 
@@ -203,7 +203,7 @@ do_b_setup_conf(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
 
 
 static int
-do_b_cleanup_conf(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
+do_b_cleanup_conf(bchannel_t *bc, mISDNuser_head_t *hh, msg_t *msg)
 {
 	dprint(DBGM_BC,"%s:ch%d bst(%d)\n", __FUNCTION__,
 		bc->channel, bc->bstate);
@@ -219,7 +219,7 @@ do_b_cleanup_conf(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
 
 
 static int
-do_b_data_cnf(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
+do_b_data_cnf(bchannel_t *bc, mISDNuser_head_t *hh, msg_t *msg)
 {
 	bc->smsg = NULL;
 	if (bc->sbuf && bc->sbuf->rsem)
@@ -229,7 +229,7 @@ do_b_data_cnf(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
 }
 
 static int
-do_b_data_ind(bchannel_t *bc, mISDN_head_t *hh, msg_t *msg)
+do_b_data_ind(bchannel_t *bc, mISDNuser_head_t *hh, msg_t *msg)
 {
 	int		len;
 	int		ret = 0;
@@ -343,7 +343,7 @@ send_setup_ack(bchannel_t *bc)
 		sizeof(SETUP_ACKNOWLEDGE_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	sa = (SETUP_ACKNOWLEDGE_t *)(msg->data + mISDN_HEAD_SIZE);
+	sa = (SETUP_ACKNOWLEDGE_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_OVERLAP_REC;
 	if (!(bc->Flags & FLG_BC_SENT_CID)) {
@@ -393,7 +393,7 @@ send_setup(bchannel_t *bc)
 		sizeof(SETUP_t), 256, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	setup = (SETUP_t *)(msg->data + mISDN_HEAD_SIZE);
+	setup = (SETUP_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	switch (bc->l1_prot) {
 		case ISDN_PID_L1_B_64TRANS:
 			bc->bc[0] = 3;
@@ -468,7 +468,7 @@ send_proceeding(bchannel_t *bc)
 		sizeof(CALL_PROCEEDING_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	proc = (CALL_PROCEEDING_t *)(msg->data + mISDN_HEAD_SIZE);
+	proc = (CALL_PROCEEDING_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_PROCEED;
 	if (!(bc->Flags & FLG_BC_SENT_CID)) {
@@ -513,7 +513,7 @@ send_alert(bchannel_t *bc)
 		sizeof(ALERTING_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	at = (ALERTING_t *)(msg->data + mISDN_HEAD_SIZE);
+	at = (ALERTING_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_PROCEED;
 	if (!(bc->Flags & FLG_BC_SENT_CID)) {
@@ -571,7 +571,7 @@ send_connect(bchannel_t *bc)
 		sizeof(CONNECT_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	conn = (CONNECT_t *)(msg->data + mISDN_HEAD_SIZE);
+	conn = (CONNECT_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_PROCEED;
 	bc->Flags &= ~FLG_BC_TONE;
@@ -632,7 +632,7 @@ send_connect_ack(bchannel_t *bc)
 	if (!msg)
 		return(-ENOMEM);
 	setup_bchannel(bc);
-	ca = (CONNECT_ACKNOWLEDGE_t *)(msg->data + mISDN_HEAD_SIZE);
+	ca = (CONNECT_ACKNOWLEDGE_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_ACTIV;
 	bc->Flags &= ~FLG_BC_TONE; 
@@ -670,7 +670,7 @@ send_disc(bchannel_t *bc)
 		sizeof(DISCONNECT_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	disc = (DISCONNECT_t *)(msg->data + mISDN_HEAD_SIZE);
+	disc = (DISCONNECT_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_DISCONNECT;
 	pthread_mutex_unlock(&bc->lock);
@@ -725,7 +725,7 @@ send_facility(bchannel_t *bc)
 		sizeof(FACILITY_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	fac = (FACILITY_t *)(msg->data + mISDN_HEAD_SIZE);
+	fac = (FACILITY_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	if (bc->display[0]) {
 		len = strlen(bc->display);
 		fac->DISPLAY = p = msg_put(msg, len+1);
@@ -758,7 +758,7 @@ send_userinfo(bchannel_t *bc)
 		sizeof(USER_INFORMATION_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	ui = (USER_INFORMATION_t *)(msg->data + mISDN_HEAD_SIZE);
+	ui = (USER_INFORMATION_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	if (bc->uu[0]) {
 		ui->USER_USER = p = msg_put(msg, bc->uu[0] + 1);
 		memcpy(p, bc->uu, bc->uu[0] + 1);
@@ -784,7 +784,7 @@ send_rel(bchannel_t *bc)
 		sizeof(RELEASE_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	rel = (RELEASE_t *)(msg->data + mISDN_HEAD_SIZE);
+	rel = (RELEASE_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_RELEASE;
 	pthread_mutex_unlock(&bc->lock);
@@ -830,7 +830,7 @@ send_relcomp(bchannel_t *bc, int l3id, int cause) {
 		sizeof(RELEASE_COMPLETE_t), 128, NULL);
 	if (!msg)
 		return(-ENOMEM);
-	rc = (RELEASE_COMPLETE_t *)(msg->data + mISDN_HEAD_SIZE);
+	rc = (RELEASE_COMPLETE_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	clear_bc(bc);
 	pthread_mutex_lock(&bc->lock);
 	bc->cstate = BC_CSTATE_NULL;
@@ -1221,7 +1221,7 @@ main_bc_task(void *arg)
 	bchannel_t	*bc = arg;
 	msg_t		*msg;
 	int		ret, id;
-	mISDN_head_t	*hh;
+	mISDNuser_head_t	*hh;
 
 	pthread_cleanup_push(cleanup_bchannel, (void *)bc);
 	dprint(DBGM_BC,"%s bc %d\n", __FUNCTION__, bc->channel);
@@ -1238,8 +1238,8 @@ main_bc_task(void *arg)
 		}
 		msg = msg_dequeue(&bc->workq);
 		if (msg) {
-			hh = (mISDN_head_t *)msg->data;
-			msg_pull(msg, mISDN_HEAD_SIZE);
+			hh = (mISDNuser_head_t *)msg->data;
+			msg_pull(msg, mISDNUSER_HEAD_SIZE);
 			dprint(DBGM_BC,"%s: bc%d st(%d/%d) prim(%x) dinfo(%x) len(%d)\n", __FUNCTION__,
 				bc->channel, bc->cstate, bc->bstate, hh->prim, hh->dinfo, msg->len);
 			ret = -EINVAL;
@@ -1278,7 +1278,7 @@ main_bc_task(void *arg)
 				case CC_NEW_CR | INDICATION:
 					pthread_mutex_lock(&bc->lock);
 					id = *((int *)msg->data);
-					msg_push(msg, mISDN_HEAD_SIZE);
+					msg_push(msg, mISDNUSER_HEAD_SIZE);
 					if (bc->manager && bc->manager->man2stack)
 						ret = bc->manager->man2stack(
 							bc->manager->nst, msg);

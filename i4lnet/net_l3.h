@@ -1,4 +1,4 @@
-/* $Id: net_l3.h,v 1.0.2.4 2004/02/14 14:37:51 jolly Exp $
+/* $Id: net_l3.h,v 1.0.2.5 2004/08/28 12:39:03 jolly Exp $
  *
  * Layer 3 defines
  *
@@ -69,7 +69,7 @@ static inline msg_t *l3_alloc_msg(int size)
 
 extern	int	Isdnl3Init(net_stack_t *);
 extern	void	cleanup_Isdnl3(net_stack_t *);
-extern	void	display_NR_IE(u_char *, char *);
+extern	void	display_NR_IE(u_char *, char *, char *);
 
 /* l3 pointer arrays */
 

@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.7 2004/02/14 14:56:02 jolly Exp $
+/* $Id: net_l3.c,v 1.0.2.8 2004/08/28 12:39:03 jolly Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.7 $";
+const char *l3_revision = "$Revision: 1.0.2.8 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -68,7 +68,7 @@ struct stateentry {
 #define ALL_STATES	0x03ffffff
 
 void
-display_NR_IE(u_char *p, char *head)
+display_NR_IE(u_char *p, char *head1, char *head2)
 {
 	int len;
 	char	txt[128];
@@ -89,7 +89,7 @@ display_NR_IE(u_char *p, char *head)
 		while(len--)
 			tp += sprintf(tp, "%c", *p++);
 	}
-	dprint(DBGM_L3, "%s %s\n", head, txt);
+	dprint(DBGM_L3, "%s%s %s\n", head1, head2, txt);
 }
 
 static void
@@ -407,6 +407,7 @@ l3dss1_msg_without_setup(layer3_proc_t *pc, u_char cause)
 	send_proc(pc, IMSG_END_PROC, NULL);
 }
 
+#if 0
 static int
 l3dss1_check_messagetype_validity(layer3_proc_t *pc, int mt, void *arg)
 {
@@ -449,6 +450,7 @@ l3dss1_check_messagetype_validity(layer3_proc_t *pc, int mt, void *arg)
 	}
 	return(0);
 }
+#endif
 
 static void
 l3dss1_std_ie_err(layer3_proc_t *pc, int ret) {
@@ -557,7 +559,7 @@ l3dss1_facility(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(FACILITY_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	fac = (FACILITY_t *)(umsg->data + mISDN_HEAD_SIZE);
+	fac = (FACILITY_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	fac->FACILITY =
 		find_and_copy_ie(msg->data, msg->len, IE_FACILITY, 0, umsg);
 	if (mISDN_l3up(pc, umsg))
@@ -574,7 +576,7 @@ l3dss1_userinfo(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(USER_INFORMATION_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	ui = (USER_INFORMATION_t *)(umsg->data + mISDN_HEAD_SIZE);
+	ui = (USER_INFORMATION_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	ui->USER_USER =
 		find_and_copy_ie(msg->data, msg->len, IE_USER_USER, 0, umsg);
 	if (mISDN_l3up(pc, umsg))
@@ -594,7 +596,7 @@ l3dss1_setup(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(SETUP_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	setup = (SETUP_t *)(umsg->data + mISDN_HEAD_SIZE);
+	setup = (SETUP_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	/*
 	 * Bearer Capabilities
 	 */
@@ -714,7 +716,7 @@ l3dss1_disconnect(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(DISCONNECT_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	disc = (DISCONNECT_t *)(umsg->data + mISDN_HEAD_SIZE);
+	disc = (DISCONNECT_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	StopAllL3Timer(pc);
 	newl3state(pc, 11);
 	if (!(disc->CAUSE = l3dss1_get_cause(pc, msg, umsg))) {
@@ -742,7 +744,7 @@ l3dss1_disconnect_i(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(DISCONNECT_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	disc = (DISCONNECT_t *)(umsg->data + mISDN_HEAD_SIZE);
+	disc = (DISCONNECT_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	StopAllL3Timer(pc);
 	if (!(disc->CAUSE = l3dss1_get_cause(pc, msg, umsg))) {
 		if (pc->l3->debug & L3_DEB_WARN)
@@ -778,7 +780,7 @@ l3dss1_information(layer3_proc_t *pc, int pr, void *arg) {
 		(pc->callref << 16), sizeof(INFORMATION_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	info = (INFORMATION_t *)(umsg->data + mISDN_HEAD_SIZE);
+	info = (INFORMATION_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	info->COMPLETE =
 		find_and_copy_ie(msg->data, msg->len, IE_COMPLETE, 0, umsg);
 	info->KEYPAD =
@@ -806,7 +808,7 @@ l3dss1_release(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(RELEASE_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	rel = (RELEASE_t *)(umsg->data + mISDN_HEAD_SIZE);
+	rel = (RELEASE_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	StopAllL3Timer(pc);
 	if (!(rel->CAUSE = l3dss1_get_cause(pc, msg, umsg))) {
 		if (pc->state != 12)
@@ -851,7 +853,7 @@ l3dss1_release_cmpl(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(RELEASE_COMPLETE_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	relc = (RELEASE_COMPLETE_t *)(umsg->data + mISDN_HEAD_SIZE);
+	relc = (RELEASE_COMPLETE_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	StopAllL3Timer(pc);
 	newl3state(pc, 0);
 	if (!(relc->CAUSE = l3dss1_get_cause(pc, msg, umsg))) {
@@ -893,7 +895,7 @@ l3dss1_proceeding_i(layer3_proc_t *pc, int pr, void *arg)
 		(pc->master->callref << 16), sizeof(CALL_PROCEEDING_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	proc = (CALL_PROCEEDING_t *)(umsg->data + mISDN_HEAD_SIZE);
+	proc = (CALL_PROCEEDING_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	L3DelTimer(&pc->timer1);	/* T304 */
 	newl3state(pc, 9);
 	proc->BEARER =
@@ -925,7 +927,7 @@ l3dss1_alerting_i(layer3_proc_t *pc, int pr, void *arg)
 		(pc->master->callref << 16), sizeof(ALERTING_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	al = (ALERTING_t *)(umsg->data + mISDN_HEAD_SIZE);
+	al = (ALERTING_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	L3DelTimer(&pc->timer1);	/* T304 */
 	newl3state(pc, 7);
 	al->BEARER =
@@ -945,6 +947,7 @@ l3dss1_alerting_i(layer3_proc_t *pc, int pr, void *arg)
 	free_msg(umsg);
 }
 
+#if 0
 static void
 l3dss1_call_proc(layer3_proc_t *pc, int pr, void *arg)
 {
@@ -957,7 +960,7 @@ l3dss1_call_proc(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(CALL_PROCEEDING_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	cp = (CALL_PROCEEDING_t *)(umsg->data + mISDN_HEAD_SIZE);
+	cp = (CALL_PROCEEDING_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	if ((cp->CHANNEL_ID = l3dss1_get_channel_id(pc, msg, umsg))) {
 		if ((0 == pc->bc) || (3 == pc->bc)) {
 			if (pc->l3->debug & L3_DEB_WARN)
@@ -996,6 +999,7 @@ l3dss1_call_proc(layer3_proc_t *pc, int pr, void *arg)
 	if (mISDN_l3up(pc, umsg))
 		free_msg(umsg);
 }
+#endif
 
 static void
 l3dss1_connect_i(layer3_proc_t *pc, int pr, void *arg)
@@ -1012,7 +1016,7 @@ l3dss1_connect_i(layer3_proc_t *pc, int pr, void *arg)
 		(pc->master->callref << 16), sizeof(CONNECT_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	conn = (CONNECT_t *)(umsg->data + mISDN_HEAD_SIZE);
+	conn = (CONNECT_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	L3DelTimer(&pc->timer1);	/* T310 */
 	newl3state(pc, 8);
 	conn->BEARER =
@@ -1062,7 +1066,7 @@ l3dss1_hold(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(HOLD_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	hold = (HOLD_t *)(umsg->data + mISDN_HEAD_SIZE);
+	hold = (HOLD_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	if (mISDN_l3up(pc, umsg))
 		free_msg(umsg);
 }
@@ -1086,7 +1090,7 @@ l3dss1_retrieve(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(RETRIEVE_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	retr = (RETRIEVE_t *)(umsg->data + mISDN_HEAD_SIZE);
+	retr = (RETRIEVE_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	retr->CHANNEL_ID =
 		find_and_copy_ie(msg->data, msg->len, IE_CHANNEL_ID, 0, umsg);
 	if (mISDN_l3up(pc, umsg))
@@ -1104,7 +1108,7 @@ l3dss1_suspend(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(SUSPEND_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	susp = (SUSPEND_t *)(umsg->data + mISDN_HEAD_SIZE);
+	susp = (SUSPEND_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	susp->CALL_ID =
 		find_and_copy_ie(msg->data, msg->len, IE_CALL_ID, 0, umsg);
 	susp->FACILITY =
@@ -1125,7 +1129,7 @@ l3dss1_resume(layer3_proc_t *pc, int pr, void *arg)
 		(pc->callref << 16), sizeof(RESUME_t), msg->len, NULL);
 	if (!umsg)
 		return;
-	res = (RESUME_t *)(umsg->data + mISDN_HEAD_SIZE);
+	res = (RESUME_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
 	res->CALL_ID =
 		find_and_copy_ie(msg->data, msg->len, IE_CALL_ID, 0, umsg);
 	res->FACILITY =
@@ -1186,12 +1190,12 @@ static struct stateentry datastatelist[] =
 
 static int
 create_child_proc(layer3_proc_t *pc, int mt, msg_t *msg, int state) {
-	mISDN_head_t	*hh;
+	mISDNuser_head_t	*hh;
 	struct _l3_msg	l3m;
 	layer3_proc_t	*p3i;
 
-	hh = (mISDN_head_t *)msg->data;
-	msg_pull(msg, mISDN_HEAD_SIZE);
+	hh = (mISDNuser_head_t *)msg->data;
+	msg_pull(msg, mISDNUSER_HEAD_SIZE);
 	p3i = create_proc(pc->l3, hh->dinfo, pc->callref, pc);
 	if (!p3i) {
 		l3_debug(pc->l3, "cannot create child\n");
@@ -1241,7 +1245,7 @@ l3dss1_release_mx(layer3_proc_t *pc, int pr, void *arg)
 {
 	msg_t	*msg = arg;
 
-	msg_pull(msg, mISDN_HEAD_SIZE);
+	msg_pull(msg, mISDNUSER_HEAD_SIZE);
 	l3dss1_release(pc, pr, msg);
 }
 
@@ -1252,7 +1256,7 @@ l3dss1_release_cmpl_m(layer3_proc_t *pc, int pr, void *arg)
 	u_char	*p;
 
 	if (pc->state == 6) {
-		msg_pull(msg, mISDN_HEAD_SIZE);
+		msg_pull(msg, mISDNUSER_HEAD_SIZE);
 		if ((p = l3dss1_get_cause(pc, msg, NULL))) {
 			dprint(DBGM_L3,"%s cause (%d/%d)\n", __FUNCTION__,
 				pc->cause, pc->err);
@@ -1276,7 +1280,7 @@ l3dss1_release_cmpl_mx(layer3_proc_t *pc, int pr, void *arg)
 {
 	msg_t	*msg = arg;
 
-	msg_pull(msg, mISDN_HEAD_SIZE);
+	msg_pull(msg, mISDNUSER_HEAD_SIZE);
 	l3dss1_release_cmpl(pc, pr, msg);
 }
 
@@ -1285,7 +1289,7 @@ l3dss1_information_mx(layer3_proc_t *pc, int pr, void *arg)
 {
 	msg_t	*msg = arg;
 
-	msg_pull(msg, mISDN_HEAD_SIZE);
+	msg_pull(msg, mISDNUSER_HEAD_SIZE);
 	l3dss1_information(pc, pr, msg);
 }
 
@@ -1790,7 +1794,7 @@ l3dss1_t303(layer3_proc_t *pc, int pr, void *arg)
 			sizeof(RELEASE_COMPLETE_t), 3, NULL);
 		if (!msg)
 			return;
-		relc = (RELEASE_COMPLETE_t *)(msg->data + mISDN_HEAD_SIZE);
+		relc = (RELEASE_COMPLETE_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 		newl3state(pc, 0);
 		relc->CAUSE = msg_put(msg, 3);
 		relc->CAUSE[0] = 2;
@@ -1826,7 +1830,7 @@ l3dss1_t303(layer3_proc_t *pc, int pr, void *arg)
 		sizeof(RELEASE_COMPLETE_t), 3, NULL);
 	if (!msg)
 		return;
-	relc = (RELEASE_COMPLETE_t *)(msg->data + mISDN_HEAD_SIZE);
+	relc = (RELEASE_COMPLETE_t *)(msg->data + mISDNUSER_HEAD_SIZE);
 	relc->CAUSE = msg_put(msg, 3);
 	relc->CAUSE[0] = 2;
 	relc->CAUSE[1] = 0x85;
@@ -2367,7 +2371,7 @@ send_proc(layer3_proc_t *proc, int op, void *arg)
 }
 
 static int
-dl_data_mux(layer3_t *l3, mISDN_head_t *hh, msg_t *msg)
+dl_data_mux(layer3_t *l3, mISDNuser_head_t *hh, msg_t *msg)
 {
 	layer3_proc_t	*proc;
 	int		ret = -EINVAL;
@@ -2457,7 +2461,7 @@ dl_data_mux(layer3_t *l3, mISDN_head_t *hh, msg_t *msg)
 	if ((proc->ces & 0xfffffff0) == 0xfff0) {
 		dprint(DBGM_L3, "%s: master state %d found\n", __FUNCTION__,
 			proc->state);
-		msg_push(msg, mISDN_HEAD_SIZE);
+		msg_push(msg, mISDNUSER_HEAD_SIZE);
 		send_proc(proc, IMSG_MASTER_L2_DATA, &l3m);
 	} else
 		send_proc(proc, IMSG_L2_DATA, &l3m);
@@ -2468,14 +2472,14 @@ dl_data_mux(layer3_t *l3, mISDN_head_t *hh, msg_t *msg)
 int
 l3_muxer(net_stack_t *nst, msg_t *msg)
 {
-	mISDN_head_t	*hh;
+	mISDNuser_head_t	*hh;
 	int		ret = -EINVAL;
 
-	hh = (mISDN_head_t *)msg->data;
+	hh = (mISDNuser_head_t *)msg->data;
 	dprint(DBGM_L3, "%s: msg len(%d)\n", __FUNCTION__, msg->len);
 	dprint(DBGM_L3, "%s: pr(%x) di(%x)\n", __FUNCTION__,
 		hh->prim, hh->dinfo);
-	msg_pull(msg, mISDN_HEAD_SIZE);
+	msg_pull(msg, mISDNUSER_HEAD_SIZE);
 	if (hh->prim == (DL_DATA | INDICATION)) {
 		ret = dl_data_mux(nst->layer3, hh, msg); 
 	} else {
@@ -2490,15 +2494,15 @@ l3_muxer(net_stack_t *nst, msg_t *msg)
 static int
 manager_l3(net_stack_t *nst, msg_t *msg)
 {
-	mISDN_head_t	*hh;
+	mISDNuser_head_t	*hh;
 	layer3_proc_t	*proc;
 	struct _l3_msg	l3m;
 
-	hh = (mISDN_head_t *)msg->data;
+	hh = (mISDNuser_head_t *)msg->data;
 	dprint(DBGM_L3, "%s: msg len(%d)\n", __FUNCTION__, msg->len);
 	dprint(DBGM_L3, "%s: pr(%x) di(%x)\n", __FUNCTION__,
 		hh->prim, hh->dinfo);
-	msg_pull(msg, mISDN_HEAD_SIZE);
+	msg_pull(msg, mISDNUSER_HEAD_SIZE);
 	proc = find_proc(nst->layer3->proc, hh->dinfo & 0xffff,
 		(hh->dinfo>>16)& 0xffff);
 	if (!proc) {
