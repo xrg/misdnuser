@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.6 2004/02/14 14:46:30 jolly Exp $
+/* $Id: net_l3.c,v 1.0.2.7 2004/02/14 14:56:02 jolly Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.6 $";
+const char *l3_revision = "$Revision: 1.0.2.7 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -1093,6 +1093,49 @@ l3dss1_retrieve(layer3_proc_t *pc, int pr, void *arg)
 		free_msg(umsg);
 }
 
+static void
+l3dss1_suspend(layer3_proc_t *pc, int pr, void *arg)
+{
+	msg_t		*umsg, *msg = arg;
+	SUSPEND_t	*susp;
+
+	dprint(DBGM_L3,"%s\n", __FUNCTION__);
+	umsg = prep_l3data_msg(CC_SUSPEND | INDICATION, pc->ces |
+		(pc->callref << 16), sizeof(SUSPEND_t), msg->len, NULL);
+	if (!umsg)
+		return;
+	susp = (SUSPEND_t *)(umsg->data + mISDN_HEAD_SIZE);
+	susp->CALL_ID =
+		find_and_copy_ie(msg->data, msg->len, IE_CALL_ID, 0, umsg);
+	susp->FACILITY =
+		find_and_copy_ie(msg->data, msg->len, IE_FACILITY, 0, umsg);
+	newl3state(pc, 15);
+	if (mISDN_l3up(pc, umsg))
+		free_msg(umsg);
+}
+
+static void
+l3dss1_resume(layer3_proc_t *pc, int pr, void *arg)
+{
+	msg_t		*umsg, *msg = arg;
+	RESUME_t	*res;
+
+	dprint(DBGM_L3,"%s\n", __FUNCTION__);
+	umsg = prep_l3data_msg(CC_RESUME | INDICATION, pc->ces |
+		(pc->callref << 16), sizeof(RESUME_t), msg->len, NULL);
+	if (!umsg)
+		return;
+	res = (RESUME_t *)(umsg->data + mISDN_HEAD_SIZE);
+	res->CALL_ID =
+		find_and_copy_ie(msg->data, msg->len, IE_CALL_ID, 0, umsg);
+	res->FACILITY =
+		find_and_copy_ie(msg->data, msg->len, IE_FACILITY, 0, umsg);
+	res->ces = pc->ces;
+	newl3state(pc, 17);
+	if (mISDN_l3up(pc, umsg))
+		free_msg(umsg);
+}
+
 static struct stateentry datastatelist[] =
 {
 	{ALL_STATES,
@@ -1132,6 +1175,10 @@ static struct stateentry datastatelist[] =
 		MT_HOLD, l3dss1_hold},
 	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
 		MT_RETRIEVE, l3dss1_retrieve},
+	{SBIT(10),
+		MT_SUSPEND, l3dss1_suspend},
+	{SBIT(0),
+		MT_RESUME, l3dss1_resume},
 };
 
 #define DATASLLEN \
@@ -1924,6 +1971,102 @@ l3dss1_retrrej_req(layer3_proc_t *pc, int pr, void *arg)
 	SendMsg(pc, -1);
 }
 
+static void
+l3dss1_suspack_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	SUSPEND_ACKNOWLEDGE_t *sack = arg;
+
+	StopAllL3Timer(pc);
+	if (sack) {
+		MsgStart(pc, MT_SUSPEND_ACKNOWLEDGE);
+		if (sack->FACILITY)
+			AddvarIE(pc, IE_FACILITY, sack->FACILITY);
+		if (sack->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, sack->DISPLAY);
+		SendMsg(pc, 0);
+	} else {
+		l3dss1_message(pc, MT_SUSPEND_ACKNOWLEDGE);
+	}
+	newl3state(pc, 0);
+	send_proc(pc, IMSG_END_PROC_M, NULL);
+}
+
+static void
+l3dss1_susprej_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	SUSPEND_REJECT_t *srej = arg;
+
+	MsgStart(pc, MT_SUSPEND_REJECT);
+	if (srej) {
+		if (srej->CAUSE)
+			AddvarIE(pc, IE_CAUSE, srej->CAUSE);
+		else {
+			*pc->op++ = IE_CAUSE;
+			*pc->op++ = 2;
+			*pc->op++ = 0x80;
+			*pc->op++ = 0x80 | 0x47;
+		}
+		if (srej->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, srej->DISPLAY);
+	} else {
+		*pc->op++ = IE_CAUSE;
+		*pc->op++ = 2;
+		*pc->op++ = 0x80;
+		*pc->op++ = 0x80 | 0x47;
+	}
+	SendMsg(pc, -1);
+	newl3state(pc, 10);
+}
+
+static void
+l3dss1_resack_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	RESUME_ACKNOWLEDGE_t *rack = arg;
+
+	StopAllL3Timer(pc);
+	if (rack) {
+		MsgStart(pc, MT_RESUME_ACKNOWLEDGE);
+		if (rack->CHANNEL_ID)
+			AddvarIE(pc, IE_CHANNEL_ID, rack->CHANNEL_ID);
+		if (rack->FACILITY)
+			AddvarIE(pc, IE_FACILITY, rack->FACILITY);
+		if (rack->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, rack->DISPLAY);
+		SendMsg(pc, 0);
+	} else {
+		l3dss1_message(pc, MT_RESUME_ACKNOWLEDGE);
+	}
+	newl3state(pc, 10);
+}
+
+static void
+l3dss1_resrej_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	RESUME_REJECT_t *rrej = arg;
+
+	MsgStart(pc, MT_RESUME_REJECT);
+	if (rrej) {
+		if (rrej->CAUSE)
+			AddvarIE(pc, IE_CAUSE, rrej->CAUSE);
+		else {
+			*pc->op++ = IE_CAUSE;
+			*pc->op++ = 2;
+			*pc->op++ = 0x80;
+			*pc->op++ = 0x80 | 0x47;
+		}
+		if (rrej->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, rrej->DISPLAY);
+	} else {
+		*pc->op++ = IE_CAUSE;
+		*pc->op++ = 2;
+		*pc->op++ = 0x80;
+		*pc->op++ = 0x80 | 0x47;
+	}
+	SendMsg(pc, -1);
+	newl3state(pc, 0);
+	send_proc(pc, IMSG_END_PROC_M, NULL);
+}
+
 /* *INDENT-OFF* */
 static struct stateentry downstatelist[] =
 {
@@ -1999,6 +2142,14 @@ machen
 	 CC_RETRIEVE_ACKNOWLEDGE | REQUEST, l3dss1_retrack_req},
 	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
 	 CC_RETRIEVE_REJECT | REQUEST, l3dss1_retrrej_req},
+	{SBIT(15),
+	 CC_SUSPEND_ACKNOWLEDGE | REQUEST, l3dss1_suspack_req},
+	{SBIT(15),
+	 CC_SUSPEND_REJECT | REQUEST, l3dss1_susprej_req},
+	{SBIT(17),
+	 CC_RESUME_ACKNOWLEDGE | REQUEST, l3dss1_resack_req},
+	{SBIT(17),
+	 CC_RESUME_REJECT | REQUEST, l3dss1_resrej_req},
 };
 
 #define DOWNSLLEN \
@@ -2276,16 +2427,16 @@ dl_data_mux(layer3_t *l3, mISDN_head_t *hh, msg_t *msg)
 	proc = find_proc(l3->proc, hh->dinfo, cr);
 	dprint(DBGM_L3, "%s: proc(%p)\n", __FUNCTION__, proc);
 	if (!proc) {
-		if (l3m.mt == MT_SETUP) {
-			/* Setup creates a new transaction process */
+		if (l3m.mt == MT_SETUP || l3m.mt == MT_RESUME) {
+			/* Setup/Resume creates a new transaction process */
 			if (msg->data[2] & 0x80) {
-				/* Setup with wrong CREF flag */
+				/* Setup/Resume with wrong CREF flag */
 				if (l3->debug & L3_DEB_STATE)
 					l3_debug(l3, "dss1 wrong CRef flag");
 				free_msg(msg);
 				return(0);
 			}
-			dprint(DBGM_L3, "%s: MT_SETUP\n", __FUNCTION__);
+			dprint(DBGM_L3, "%s: %s\n", __FUNCTION__, (l3m.mt==MT_SETUP)?"MT_SETUP":"MT_RESUME");
 			if (!(proc = create_proc(l3, hh->dinfo, cr, NULL))) {
 				/* May be to answer with RELEASE_COMPLETE and
 				 * CAUSE 0x2f "Resource unavailable", but this
