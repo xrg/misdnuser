@@ -1,4 +1,4 @@
-/* $Id: l3dss1.h,v 1.0.2.1 2003/08/27 13:39:38 keil Exp $
+/* $Id: l3dss1.h,v 1.0.2.2 2003/08/27 13:44:51 keil Exp $
  *
  *  DSS1 (Euro) D-channel protocol defines
  *
@@ -70,6 +70,12 @@
 #define MT_NOTIFY		0x6e
 #define MT_STATUS		0x7d
 #define MT_STATUS_ENQUIRY	0x75
+#define MT_HOLD			0x24
+#define MT_HOLD_ACKNOWLEDGE	0x28
+#define MT_HOLD_REJECT		0x30
+#define MT_RETRIEVE		0x31
+#define MT_RETRIEVE_ACKNOWLEDGE	0x33
+#define MT_RETRIEVE_REJECT	0x37
 
 #define IE_SEGMENT	0x00
 #define IE_BEARER	0x04
@@ -152,6 +158,13 @@
 #define NO_CAUSE		254
 
 #define PROGRESS_TONE		8
+
+#define HOLDAUX_IDLE		0
+#define HOLDAUX_HOLD_REQ	1
+#define HOLDAUX_HOLD		2
+#define HOLDAUX_RETR_REQ	3
+#define HOLDAUX_HOLD_IND	4
+#define HOLDAUX_RETR_IND	5
 
 #else /* only l3dss1_process */
 
