@@ -1,4 +1,4 @@
-/* $Id: net_l2.h,v 1.0.2.1 2004/02/14 14:27:59 jolly Exp $
+/* $Id: net_l2.h,v 1.0.2.2 2004/02/14 17:38:46 jolly Exp $
  *
  * Layer 2 defines
  *
@@ -16,6 +16,8 @@
 #ifdef MEMDBG
 #include "memdbg.h"
 #endif
+
+#define DINFO_SKB       -1
 
 #define MAX_WINDOW	8
 
