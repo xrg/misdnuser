@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.5 2004/02/14 14:37:51 jolly Exp $
+/* $Id: net_l3.c,v 1.0.2.6 2004/02/14 14:46:30 jolly Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.5 $";
+const char *l3_revision = "$Revision: 1.0.2.6 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -434,6 +434,8 @@ l3dss1_check_messagetype_validity(layer3_proc_t *pc, int mt, void *arg)
 		case MT_CONGESTION_CONTROL:
 		case MT_STATUS:
 		case MT_STATUS_ENQUIRY:
+		case MT_HOLD:
+		case MT_RETRIEVE:
 		case MT_RESUME: /* RESUME only in user->net */
 		case MT_SUSPEND: /* SUSPEND only in user->net */
 			if (pc->l3->debug & L3_DEB_CHECK)
@@ -671,6 +673,8 @@ l3dss1_setup(layer3_proc_t *pc, int pr, void *arg)
 		find_and_copy_ie(msg->data, msg->len, IE_PROGRESS, 0, umsg);
 	setup->NET_FAC =
 		find_and_copy_ie(msg->data, msg->len, IE_NET_FAC, 0, umsg);
+	setup->KEYPAD =
+		find_and_copy_ie(msg->data, msg->len, IE_KEYPAD, 0, umsg);
 	setup->SIGNAL =
 		find_and_copy_ie(msg->data, msg->len, IE_SIGNAL, 0, umsg);
 	setup->CALLED_PN =
@@ -1965,7 +1969,7 @@ zeile nicht: (bitte nachdenken, ob dies korrekt ist)
 Nein glaube ich nicht. CC_RELEASE |= CC_RELEASE_CR muss aber mal ein paar Tests
 machen
 */
-//	| SBIT(7) | SBIT(9) | SBIT(25)
+	| SBIT(12) | SBIT(7) | SBIT(9) | SBIT(25)
 	 ,CC_RELEASE | REQUEST, l3dss1_release_req},
 #warning noch ein bug: wenn ein CC_DISCONNECT gesendet wird (state 7 = klingeling), dann bekommt man nur einen RELEASE_CR, aber keinen vorherigen RELEASE 
 /* muss ich auch testen, keine Zeit */
