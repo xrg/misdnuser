@@ -1,4 +1,4 @@
-/* $Id: net_l3.h,v 1.0.2.1 2003/08/27 09:57:00 kkeil Exp $
+/* $Id: net_l3.h,v 1.0.2.2 2003/08/27 14:28:17 keil Exp $
  *
  * Layer 3 defines
  *
@@ -36,6 +36,7 @@ struct _layer3_proc {
 	int		bc;
 	int             err;
 	int		cause;
+	int		hold_state;
 	u_char		obuf[MAX_DFRAME_LEN];
 	u_char		*op;
 };
@@ -254,5 +255,32 @@ typedef struct _FACILITY {
 	u_char *DISPLAY;
 } FACILITY_t;
 
+typedef struct _HOLD {
+	u_char *DISPLAY;
+} HOLD_t;
+
+typedef struct _HOLD_ACKNOWLEDGE {
+	u_char *CHANNEL_ID;
+	u_char *DISPLAY;
+} HOLD_ACKNOWLEDGE_t;
+
+typedef struct _HOLD_REJECT {
+	u_char *CAUSE;
+	u_char *DISPLAY;
+} HOLD_REJECT_t;
+
+typedef struct _RETRIEVE {
+	u_char *CHANNEL_ID;
+} RETRIEVE_t;
+
+typedef struct _RETRIEVE_ACKNOWLEDGE {
+	u_char *CHANNEL_ID;
+	u_char *DISPLAY;
+} RETRIEVE_ACKNOWLEDGE_t;
+
+typedef struct _RETRIEVE_REJECT {
+	u_char *CAUSE;
+	u_char *DISPLAY;
+} RETRIEVE_REJECT_t;
 
 #endif
