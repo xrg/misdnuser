@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.1 2003/08/27 09:57:00 kkeil Exp $
+/* $Id: net_l3.c,v 1.0.2.2 2003/08/27 10:07:05 kkeil Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.1 $";
+const char *l3_revision = "$Revision: 1.0.2.2 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -1036,6 +1036,57 @@ l3dss1_connect_i(layer3_proc_t *pc, int pr, void *arg)
 		free_msg(umsg); 
 }
 
+static void
+l3dss1_hold(layer3_proc_t *pc, int pr, void *arg)
+{
+	msg_t		*umsg, *msg = arg;
+	HOLD_t		*hold;
+
+	dprint(DBGM_L3,"%s\n", __FUNCTION__);
+#warning TODO: global mask for supported none mandatory services, like HOLD
+	if (pc->hold_state == HOLDAUX_HOLD_IND)
+		return;
+	if (pc->hold_state != HOLDAUX_IDLE) {
+		l3dss1_message_cause(pc, MT_HOLD_REJECT, CAUSE_NOTCOMPAT_STATE);
+		return;
+	}
+	pc->hold_state = HOLDAUX_HOLD_IND; 
+
+	umsg = prep_l3data_msg(CC_HOLD | INDICATION, pc->ces |
+		(pc->callref << 16), sizeof(HOLD_t), msg->len, NULL);
+	if (!umsg)
+		return;
+	hold = (HOLD_t *)(umsg->data + mISDN_HEAD_SIZE);
+	if (mISDN_l3up(pc, umsg))
+		free_msg(umsg);
+}
+
+static void
+l3dss1_retrieve(layer3_proc_t *pc, int pr, void *arg)
+{
+	msg_t		*umsg, *msg = arg;
+	RETRIEVE_t	*retr;
+
+	dprint(DBGM_L3,"%s\n", __FUNCTION__);
+	if (pc->hold_state == HOLDAUX_RETR_IND)
+		return;
+	if (pc->hold_state != HOLDAUX_HOLD) {
+		l3dss1_message_cause(pc, MT_RETRIEVE_REJECT, CAUSE_NOTCOMPAT_STATE);
+		return;
+	}
+	pc->hold_state = HOLDAUX_RETR_IND;
+
+	umsg = prep_l3data_msg(CC_RETRIEVE | INDICATION, pc->ces |
+		(pc->callref << 16), sizeof(RETRIEVE_t), msg->len, NULL);
+	if (!umsg)
+		return;
+	retr = (RETRIEVE_t *)(umsg->data + mISDN_HEAD_SIZE);
+	retr->CHANNEL_ID =
+		find_and_copy_ie(msg->data, msg->len, IE_CHANNEL_ID, 0, umsg);
+	if (mISDN_l3up(pc, umsg))
+		free_msg(umsg);
+}
+
 static struct stateentry datastatelist[] =
 {
 	{ALL_STATES,
@@ -1071,6 +1122,10 @@ static struct stateentry datastatelist[] =
 		MT_USER_INFORMATION, l3dss1_userinfo},
 	{SBIT(7) | SBIT(8) | SBIT(9) | SBIT(19) | SBIT(25),
 		MT_RELEASE_COMPLETE, l3dss1_release_cmpl_i},
+	{SBIT(3) | SBIT(4) | SBIT(10),
+		MT_HOLD, l3dss1_hold},
+	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
+		MT_RETRIEVE, l3dss1_retrieve},
 };
 
 #define DATASLLEN \
@@ -1765,6 +1820,101 @@ l3dss1_t312(layer3_proc_t *pc, int pr, void *arg)
 			send_proc(pc, IMSG_END_PROC_M, NULL);
 		}
 	}
+}
+
+static void
+l3dss1_holdack_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	HOLD_ACKNOWLEDGE_t *hack = arg;
+
+	if (pc->hold_state != HOLDAUX_HOLD_IND)
+		return;
+	pc->hold_state = HOLDAUX_HOLD; 
+	if (hack) {
+		MsgStart(pc, MT_HOLD_ACKNOWLEDGE);
+		if (hack->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, hack->DISPLAY);
+		SendMsg(pc, -1);
+	} else {
+		l3dss1_message(pc, MT_HOLD_ACKNOWLEDGE);
+	}
+}
+
+static void
+l3dss1_holdrej_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	HOLD_REJECT_t *hrej = arg;
+
+	if (pc->hold_state != HOLDAUX_HOLD_IND)
+		return;
+	pc->hold_state = HOLDAUX_IDLE; 
+	MsgStart(pc, MT_HOLD_REJECT);
+	if (hrej) {
+		if (hrej->CAUSE)
+			AddvarIE(pc, IE_CAUSE, hrej->CAUSE);
+		else {
+			*pc->op++ = IE_CAUSE;
+			*pc->op++ = 2;
+			*pc->op++ = 0x80;
+			*pc->op++ = 0x80 | 0x47;
+		}
+		if (hrej->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, hrej->DISPLAY);
+	} else {
+		*pc->op++ = IE_CAUSE;
+		*pc->op++ = 2;
+		*pc->op++ = 0x80;
+		*pc->op++ = 0x80 | 0x47;
+	}
+	SendMsg(pc, -1);
+}
+
+static void
+l3dss1_retrack_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	RETRIEVE_ACKNOWLEDGE_t *rack = arg;
+
+	if (pc->hold_state != HOLDAUX_RETR_IND)
+		return;
+	if (rack) {
+		MsgStart(pc, MT_RETRIEVE_ACKNOWLEDGE);
+		if (rack->CHANNEL_ID)
+			AddvarIE(pc, IE_CHANNEL_ID, rack->CHANNEL_ID);
+		if (rack->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, rack->DISPLAY);
+		SendMsg(pc, -1);
+	} else {
+		l3dss1_message(pc, MT_RETRIEVE_ACKNOWLEDGE);
+	}
+}
+
+static void
+l3dss1_retrrej_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	RETRIEVE_REJECT_t *rrej = arg;
+
+	if (pc->hold_state != HOLDAUX_RETR_IND)
+		return;
+	pc->hold_state = HOLDAUX_HOLD; 
+	MsgStart(pc, MT_RETRIEVE_REJECT);
+	if (rrej) {
+		if (rrej->CAUSE)
+			AddvarIE(pc, IE_CAUSE, rrej->CAUSE);
+		else {
+			*pc->op++ = IE_CAUSE;
+			*pc->op++ = 2;
+			*pc->op++ = 0x80;
+			*pc->op++ = 0x80 | 0x47;
+		}
+		if (rrej->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, rrej->DISPLAY);
+	} else {
+		*pc->op++ = IE_CAUSE;
+		*pc->op++ = 2;
+		*pc->op++ = 0x80;
+		*pc->op++ = 0x80 | 0x47;
+	}
+	SendMsg(pc, -1);
 }
 
 /* *INDENT-OFF* */
