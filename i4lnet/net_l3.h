@@ -1,4 +1,4 @@
-/* $Id: net_l3.h,v 1.0 2003/08/27 07:35:32 kkeil Exp $
+/* $Id: net_l3.h,v 1.0.2.1 2003/08/27 09:57:00 kkeil Exp $
  *
  * Layer 3 defines
  *
@@ -134,6 +134,7 @@ typedef struct _NOTIFY {
 	u_char *BEARER;
 	u_char *NOTIFY;
 	u_char *DISPLAY;
+	u_char *REDIR_DN;
 } NOTIFY_t;
 
 typedef struct _PROGRESS {

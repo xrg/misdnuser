@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0 2003/08/27 07:35:32 kkeil Exp $
+/* $Id: net_l3.c,v 1.0.2.1 2003/08/27 09:57:00 kkeil Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0 $";
+const char *l3_revision = "$Revision: 1.0.2.1 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -41,6 +41,7 @@ enum {
 	IMSG_L4_DATA,
 	IMSG_TIMER_EXPIRED,
 	IMSG_MASTER_L2_DATA,
+	IMSG_PROCEEDING_IND,
 	IMSG_ALERTING_IND,
 	IMSG_CONNECT_IND,
 	IMSG_SEL_PROC,
@@ -872,6 +873,38 @@ l3dss1_release_cmpl_i(layer3_proc_t *pc, int pr, void *arg)
 }
 
 static void
+l3dss1_proceeding_i(layer3_proc_t *pc, int pr, void *arg)
+{
+	msg_t			*umsg, *msg = arg;
+	CALL_PROCEEDING_t	*proc;
+
+	dprint(DBGM_L3,"%s\n", __FUNCTION__);
+	if (!pc->master) {
+		L3DelTimer(&pc->timer1);
+		newl3state(pc, 9);
+		return;
+	}
+	umsg = prep_l3data_msg(CC_PROCEEDING | INDICATION, pc->master->ces |
+		(pc->master->callref << 16), sizeof(CALL_PROCEEDING_t), msg->len, NULL);
+	if (!umsg)
+		return;
+	proc = (CALL_PROCEEDING_t *)(umsg->data + mISDN_HEAD_SIZE);
+	L3DelTimer(&pc->timer1);	/* T304 */
+	newl3state(pc, 9);
+	proc->BEARER =
+		find_and_copy_ie(msg->data, msg->len, IE_BEARER, 0, umsg);
+	proc->FACILITY =
+		find_and_copy_ie(msg->data, msg->len, IE_FACILITY, 0, umsg);
+	proc->PROGRESS =
+		find_and_copy_ie(msg->data, msg->len, IE_PROGRESS, 0, umsg);
+	proc->HLC =
+		find_and_copy_ie(msg->data, msg->len, IE_HLC, 0, umsg);
+	if (!mISDN_l3up(pc->master, umsg))
+		return;
+	free_msg(umsg);
+}
+
+static void
 l3dss1_alerting_i(layer3_proc_t *pc, int pr, void *arg)
 {
 	msg_t		*umsg, *msg = arg;
@@ -1014,6 +1047,8 @@ static struct stateentry datastatelist[] =
 	{SBIT(0),
 		MT_SETUP, l3dss1_setup},
 	{SBIT(6) | SBIT(7)  | SBIT(9) | SBIT(25),
+		MT_CALL_PROCEEDING, l3dss1_proceeding_i},
+	{SBIT(6) | SBIT(7)  | SBIT(9) | SBIT(25),
 		MT_ALERTING, l3dss1_alerting_i},
 	{SBIT(6) | SBIT(7)  | SBIT(9) | SBIT(25),
 		MT_CONNECT, l3dss1_connect_i},
@@ -1062,6 +1097,14 @@ create_child_proc(layer3_proc_t *pc, int mt, msg_t *msg, int state) {
 	send_proc(p3i, IMSG_L2_DATA, &l3m);
 	return(0);
 }                                                   
+
+static void
+l3dss1_proceeding_m(layer3_proc_t *pc, int pr, void *arg)
+{
+	dprint(DBGM_L3,"%s\n", __FUNCTION__);
+	L3DelTimer(&pc->timer1);
+	create_child_proc(pc, pr, arg, 9);
+}
 
 static void
 l3dss1_alerting_m(layer3_proc_t *pc, int pr, void *arg)
@@ -1140,9 +1183,8 @@ l3dss1_information_mx(layer3_proc_t *pc, int pr, void *arg)
 
 static struct stateentry mdatastatelist[] =
 {
-
-// TODO CALL_PROCEEDING
-
+	{SBIT(6) | SBIT(7) | SBIT(9) | SBIT(25),
+		MT_CALL_PROCEEDING, l3dss1_proceeding_m},
 	{SBIT(6) | SBIT(7) | SBIT(9) | SBIT(25),
 		MT_ALERTING, l3dss1_alerting_m},
 	{SBIT(6) | SBIT(7) | SBIT(9) | SBIT(25),
@@ -1463,6 +1505,76 @@ l3dss1_userinfo_req(layer3_proc_t *pc, int pr, void *arg)
 }
 
 static void
+l3dss1_information_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	INFORMATION_t *info = arg;
+
+	if (info) {
+		MsgStart(pc, MT_INFORMATION);
+ 		if (info->COMPLETE)
+			*pc->op++ = IE_COMPLETE;
+		if (info->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, info->DISPLAY);
+		if (info->KEYPAD)
+			AddvarIE(pc, IE_KEYPAD, info->KEYPAD);
+		if (info->SIGNAL)
+			AddvarIE(pc, IE_SIGNAL, info->SIGNAL);
+		if (info->CALLED_PN)
+			AddvarIE(pc, IE_CALLED_PN, info->CALLED_PN);
+		SendMsg(pc, -1);
+	}
+}
+
+static void
+l3dss1_progress_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	PROGRESS_t *prog = arg;
+
+	if (prog) {
+		MsgStart(pc, MT_INFORMATION);
+		if (prog->BEARER)
+			AddvarIE(pc, IE_BEARER, prog->BEARER);
+		if (prog->CAUSE)
+			AddvarIE(pc, IE_CAUSE, prog->CAUSE);
+		if (prog->FACILITY)
+			AddvarIE(pc, IE_FACILITY, prog->FACILITY);
+		if (prog->PROGRESS)
+			AddvarIE(pc, IE_PROGRESS, prog->PROGRESS);
+		else
+			return;
+		if (prog->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, prog->DISPLAY);
+		if (prog->HLC)
+			AddvarIE(pc, IE_HLC, prog->HLC);
+#warning ETSI 300286-1 only define USER_USER for USER_INFORMATION SETUP ALERTING PROGRESS CONNECT DISCONNECT RELEASE*
+		if (prog->USER_USER)
+			AddvarIE(pc, IE_USER_USER, prog->USER_USER);
+		SendMsg(pc, -1);
+	}
+}
+
+static void
+l3dss1_notify_req(layer3_proc_t *pc, int pr, void *arg)
+{
+	NOTIFY_t *noti = arg;
+
+	if (noti) {
+		MsgStart(pc, MT_INFORMATION);
+		if (noti->BEARER)
+			AddvarIE(pc, IE_BEARER, noti->BEARER);
+		if (noti->NOTIFY)
+			AddvarIE(pc, IE_NOTIFY, noti->NOTIFY);
+		else
+			return;
+		if (noti->DISPLAY)
+			AddvarIE(pc, IE_DISPLAY, noti->DISPLAY);
+		if (noti->REDIR_DN)
+			AddvarIE(pc, IE_REDIR_DN, noti->REDIR_DN);
+		SendMsg(pc, -1);
+	}
+}
+
+static void
 l3dss1_disconnect_req_out(layer3_proc_t *pc, int pr, void *arg)
 {
 	DISCONNECT_t	*disc = arg;
@@ -1540,6 +1652,19 @@ l3dss1_release_cmpl_req(layer3_proc_t *pc, int pr, void *arg)
 		l3dss1_message(pc, MT_RELEASE_COMPLETE);
 	}
 	send_proc(pc, IMSG_END_PROC_M, NULL);
+}
+
+static void
+l3dss1_t302(layer3_proc_t *pc, int pr, void *arg)
+{
+	{
+		int t = 0x302;
+
+		StopAllL3Timer(pc);
+		if_link(pc->l3->nst->manager, (ifunc_t)pc->l3->nst->l3_manager,
+			CC_TIMEOUT | INDICATION,pc->ces | (pc->callref << 16),
+			sizeof(int), &t, 0);
+	}
 }
 
 static void
@@ -1665,9 +1790,9 @@ static struct stateentry downstatelist[] =
 	 CC_SETUP_ACKNOWLEDGE | REQUEST, l3dss1_setup_ack_req},
 	{SBIT(1) | SBIT(2),
 	 CC_PROCEEDING | REQUEST, l3dss1_proceed_req},
-	{SBIT(1) | SBIT(2) | SBIT(3),
+	{SBIT(2) | SBIT(3),
 	 CC_ALERTING | REQUEST, l3dss1_alert_req},
-	{SBIT(1) | SBIT(2) | SBIT(3) | SBIT(4),
+	{SBIT(2) | SBIT(3) | SBIT(4),
 	 CC_CONNECT | REQUEST, l3dss1_connect_req},
 	{SBIT(8),
 	 CC_CONNECT | RESPONSE, l3dss1_connect_res},
@@ -1675,13 +1800,34 @@ static struct stateentry downstatelist[] =
 	 CC_DISCONNECT | REQUEST, l3dss1_disconnect_req},
 	{SBIT(6) | SBIT(7) | SBIT(8) | SBIT(9) | SBIT(25),
 	 CC_DISCONNECT | REQUEST, l3dss1_disconnect_req_out},
-// TODO CC_RELEASE only in SBIT(11)
-	{SBIT(6) | SBIT(7) | SBIT(11) | SBIT(25),
-	 CC_RELEASE | REQUEST, l3dss1_release_req},
+	{SBIT(11)
+#warning bitte beachte folgendes:
+/*
+es ist nur erlaubt, im state 11 einen release zu schicken!
+dennoch verwende der stack den release scheinbar, um einen prozess
+zu releasen, wie es z.b. in l3dss1_disconnect_req_out geschieht.
+der process befindet sich zu diesem zeitpunk noch im state 7, 9 oder 25.
+wenn man den (Layer 4) state auf 11 ändern würde, braucht mann die folgende
+zeile nicht: (bitte nachdenken, ob dies korrekt ist)
+Nein glaube ich nicht. CC_RELEASE |= CC_RELEASE_CR muss aber mal ein paar Tests
+machen
+*/
+//	| SBIT(7) | SBIT(9) | SBIT(25)
+	 ,CC_RELEASE | REQUEST, l3dss1_release_req},
+#warning noch ein bug: wenn ein CC_DISCONNECT gesendet wird (state 7 = klingeling), dann bekommt man nur einen RELEASE_CR, aber keinen vorherigen RELEASE 
+/* muss ich auch testen, keine Zeit */
 	{ALL_STATES,
 	 CC_FACILITY | REQUEST, l3dss1_facility_req},
 	{SBIT(4) | SBIT(7) | SBIT(8) | SBIT(10),
 	 CC_USER_INFORMATION | REQUEST, l3dss1_userinfo_req},
+	{SBIT(2) | SBIT(3) | SBIT(4) | SBIT(10) | SBIT(11) | SBIT(12),
+	 CC_INFORMATION | REQUEST, l3dss1_information_req},
+	{SBIT(2) | SBIT(3) | SBIT(4),
+	 CC_PROGRESS | REQUEST, l3dss1_progress_req},
+	{SBIT(10) | SBIT(15),
+	 CC_NOTIFY | REQUEST, l3dss1_notify_req},
+	{SBIT(2),
+	 CC_T302, l3dss1_t302},
 	{SBIT(6),
 	 CC_T303, l3dss1_t303},
 	{SBIT(19),
@@ -1718,7 +1864,8 @@ imsg_intrelease(layer3_proc_t *master, layer3_proc_t *child)
 		case 25:
 			if (master->child ||
 				test_bit(FLG_L3P_TIMER312, &master->Flags)) {
-				/* TODO: save cause */
+#warning TODO: save cause
+#warning bedenke auch, dass vielleicht overlap sending mit information-messages praktisch wäre (später PTP)
 			} else {
 				send_proc(master, IMSG_END_PROC, NULL);
 			}
@@ -2046,7 +2193,6 @@ manager_l3(net_stack_t *nst, msg_t *msg)
 				nst->layer3->next_cr = 1;
 			proc = create_proc(nst->layer3, hh->dinfo & 0xffff,
 				nst->layer3->next_cr | 0x80, NULL);
-			// TODO Errorhandling
 			dprint(DBGM_L3, "%s: proc(%p)\n", __FUNCTION__, proc);
 			APPEND_TO_LIST(proc, nst->layer3->proc);
 			l4id = proc->ces | (proc->callref << 16);
@@ -2164,6 +2310,9 @@ l3_msg(layer3_t *l3, u_int pr, int dinfo, void *arg)
 			}
 			break;
 		case (DL_RELEASE | INDICATION):
+#warning du musst alle processe releasen CC_RELEASE!!! dies geschieht z.b. wenn man das telefon vom s0-bus abnimmt und der layer-2 dadurch zusammen bricht.
+#warning geschieht dies auch im TE-mode?
+#warning TODO DL_RELEASE | INDICATION handling; inclusiv special state 10 (T309)
 			if (l3->l2_state == ST_L3_LC_ESTAB) {
 				l3->l2_state = ST_L3_LC_REL;
 			}
