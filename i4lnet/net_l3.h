@@ -1,4 +1,4 @@
-/* $Id: net_l3.h,v 1.0.2.3 2004/02/14 14:27:59 jolly Exp $
+/* $Id: net_l3.h,v 1.0.2.4 2004/02/14 14:37:51 jolly Exp $
  *
  * Layer 3 defines
  *
@@ -106,6 +106,7 @@ typedef struct _CONNECT {
 	u_char *LLC;
 	u_char *HLC;
 	u_char *USER_USER;
+	int ces;
 } CONNECT_t;
 
 typedef struct _CONNECT_ACKNOWLEDGE {
@@ -167,6 +168,7 @@ typedef struct _RELEASE_COMPLETE {
 typedef struct _RESUME {
 	u_char *CALL_ID;
 	u_char *FACILITY;
+	int ces;
 } RESUME_t;
 
 typedef struct _RESUME_ACKNOWLEDGE {
@@ -198,6 +200,7 @@ typedef struct _SETUP {
 	u_char *LLC;
 	u_char *HLC;
 	u_char *USER_USER;
+	int ces;
 } SETUP_t;
 
 typedef struct _SETUP_ACKNOWLEDGE {

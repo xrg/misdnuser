@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.4 2003/08/27 13:40:34 keil Exp $
+/* $Id: net_l3.c,v 1.0.2.5 2004/02/14 14:37:51 jolly Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.4 $";
+const char *l3_revision = "$Revision: 1.0.2.5 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -689,6 +689,7 @@ l3dss1_setup(layer3_proc_t *pc, int pr, void *arg)
 		find_and_copy_ie(msg->data, msg->len, IE_HLC, 0, umsg);
 	setup->USER_USER =
 		find_and_copy_ie(msg->data, msg->len, IE_USER_USER, 0, umsg);
+	setup->ces = pc->ces;
 	newl3state(pc, 1);
 	L3DelTimer(&pc->timer2);
 	L3AddTimer(&pc->timer2, T_CTRL, 0x31f);
@@ -1032,6 +1033,7 @@ l3dss1_connect_i(layer3_proc_t *pc, int pr, void *arg)
 		find_and_copy_ie(msg->data, msg->len, IE_LLC, 0, umsg);
 	conn->USER_USER =
 		find_and_copy_ie(msg->data, msg->len, IE_USER_USER, 0, umsg);
+	conn->ces = pc->ces;
 	if (send_proc(pc, IMSG_CONNECT_IND, umsg))
 		free_msg(umsg); 
 }
