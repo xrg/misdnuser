@@ -1,4 +1,4 @@
-/* $Id: net_l2.h,v 1.0 2003/08/27 07:35:32 kkeil Exp $
+/* $Id: net_l2.h,v 1.0.2.1 2004/02/14 14:27:59 jolly Exp $
  *
  * Layer 2 defines
  *
@@ -37,7 +37,7 @@ struct _layer2 {
 	laddr_t		addr;
 	int		maxlen;
 	teimgr_t	*tm;
-	u_int		flag;
+	u_long		flag;
 	u_int		vs, va, vr;
 	int		rc;
 	u_int		window;
@@ -70,8 +70,8 @@ extern int tei_mux(net_stack_t *nst, msg_t *msg);
 extern int l2_tei(teimgr_t *tm, msg_t *msg);
 extern int create_teimgr(layer2_t *l2);
 extern void release_tei(teimgr_t *tm);
-extern int TEIInit(void);
-extern void TEIFree(void);
+extern int TEIInit(net_stack_t *nst);
+extern void TEIFree(net_stack_t *nst);
 
 #define GROUP_TEI	127
 #define TEI_SAPI	63

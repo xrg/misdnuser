@@ -1,4 +1,4 @@
-/* $Id: net_l3.h,v 1.0.2.2 2003/08/27 14:28:17 keil Exp $
+/* $Id: net_l3.h,v 1.0.2.3 2004/02/14 14:27:59 jolly Exp $
  *
  * Layer 3 defines
  *
@@ -30,7 +30,7 @@ struct _layer3_proc {
 	int		ces;
 	int		selces;
 	int		state;
-	int		Flags;
+	u_long		Flags;
 	L3Timer_t	timer1;
 	L3Timer_t	timer2;
 	int		bc;

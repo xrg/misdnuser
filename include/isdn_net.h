@@ -122,8 +122,10 @@ struct _net_stack {
 	int			b_stid[2];
 	int			b_addr[2];
 	int			bcid[2];
-	int			flag;
+	u_long			flag;
 	struct _itimer		*tlist;
+	void			*l2fsm;
+	void			*teifsm;
 };
 
 struct _nr_list {
@@ -146,7 +148,7 @@ typedef struct _itimer {
 	net_stack_t		*nst;
 	int			id;
 	int			expires;
-	int			Flags;
+	u_long			Flags;
 	unsigned long		data;
 	int			(*function)(unsigned long);
 } itimer_t;
