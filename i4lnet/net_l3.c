@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.0.2.3 2003/08/27 10:10:05 kkeil Exp $
+/* $Id: net_l3.c,v 1.0.2.4 2003/08/27 13:40:34 keil Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.0.2.3 $";
+const char *l3_revision = "$Revision: 1.0.2.4 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -1985,6 +1985,14 @@ machen
 	 CC_T308, l3dss1_t308},
 	{ALL_STATES,
 	 CC_T312, l3dss1_t312},
+	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
+	 CC_HOLD_ACKNOWLEDGE | REQUEST, l3dss1_holdack_req},
+	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
+	 CC_HOLD_REJECT | REQUEST, l3dss1_holdrej_req},
+	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
+	 CC_RETRIEVE_ACKNOWLEDGE | REQUEST, l3dss1_retrack_req},
+	{SBIT(3) | SBIT(4) | SBIT(10) | SBIT(12),
+	 CC_RETRIEVE_REJECT | REQUEST, l3dss1_retrrej_req},
 };
 
 #define DOWNSLLEN \
