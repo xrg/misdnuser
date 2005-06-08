@@ -30,6 +30,7 @@ typedef struct _iframe {
 
 
 #define TIMEOUT_1SEC	1000000
+#define TIMEOUT_5SEC	5000000
 #define TIMEOUT_10SEC	10000000
 #define TIMEOUT_INFINIT -1
 
@@ -269,10 +270,29 @@ extern int mISDN_get_layerid(int fid, int stack, int layer);
  * l_info   - info for the layer
  *
  * return:
- *    layer id or negativ error code
+ *    0 on success or error code
+ *    l_info->id the id of the new layer
+ *    l_info->clone the id of a cloned layer
  *
  */
 extern int mISDN_new_layer(int fid, layer_info_t *l_info);
+
+/* mISDN_preregister_layer(int fid, u_int sid, u_int lid)
+ *
+ * preregister a layer on a stack
+ *
+ * parameter:
+ * fid      - FILE descriptor returned by mISDN_open
+ * sid      - stack id
+ * lid      - layer (instance) id
+ *
+ * return:
+ *    0 on success or error code
+ *
+ */
+extern int mISDN_register_layer(int, u_int, u_int);
+extern int mISDN_unregister_layer(int, u_int, u_int);
+extern int mISDN_get_setstack_ind(int fid, u_int lid);
 
 /* mISDN_connect(int fid, interface_info_t *i_info)
  *
@@ -286,7 +306,7 @@ extern int mISDN_new_layer(int fid, layer_info_t *l_info);
  *    0 on success or error code
  *
  */
-extern int mISDN_connect(int fid, interface_info_t *i_info);
+//extern int mISDN_connect(int fid, interface_info_t *i_info);
 
 /* mISDN_get_layer_info(int fid, int lid, void *info, size_t max_len)
  *
@@ -304,6 +324,20 @@ extern int mISDN_connect(int fid, interface_info_t *i_info);
  */
 extern int mISDN_get_layer_info(int fid, int lid, void *info, size_t max_len);
 
+/* mISDNprint_layer_info(FILE *file, layer_info_t *l_info)
+ *
+ * print out the layer_info in readable output
+ *
+ * parameter:
+ * file     - stream to print to
+ * l_info   - layer_info
+ *
+ * return:
+ *    nothing
+ *
+ */
+extern void mISDNprint_layer_info(FILE *file, layer_info_t *l_info);
+
 /* mISDN_get_interface_info(int fid, interface_info_t *i_info)
  *
  * get the info about ISDN layer interface
@@ -317,7 +351,7 @@ extern int mISDN_get_layer_info(int fid, int lid, void *info, size_t max_len);
  *    0 on sucess other values are errors
  *
  */
-extern int mISDN_get_interface_info(int fid, interface_info_t *i_info);
+//extern int mISDN_get_interface_info(int fid, interface_info_t *i_info);
 
 /* Prototypes and defines for status.c */
 
