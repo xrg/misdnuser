@@ -1,10 +1,12 @@
 LIBINCL	:= $(INCLUDEDIR)/mISDNlib.h $(INCLUDEDIR)/mISDNif.h
-PROGS	:= testcon loadfirm
+PROGS	:= testcon testlayer3 loadfirm
 # PROGS   := testcon testnet testcon_l2 loadfirm logger
 
 all: $(PROGS)
 
 testcon: testcon.o $(mISDNLIB)
+
+testlayer3: testlayer3.o $(mISDNLIB)
 
 testnet: testnet.o $(mISDNLIB)
 
@@ -16,6 +18,8 @@ logger: logger.o $(mISDNLIB)
 
 
 testcon.o : testcon.c ../include/l3dss1.h $(LIBINCL)
+
+testlayer3.o : testlayer3.c ../include/l3dss1.h $(LIBINCL)
 
 testnet.o : testnet.c ../include/l3dss1.h $(LIBINCL)
 
