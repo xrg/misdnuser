@@ -120,13 +120,23 @@ mISDN_initQ931_info(Q931_info_t *qi) {
 	memset(qi, 0, sizeof(Q931_info_t));
 };
 
+int mISDN_get_free_ext_ie(Q931_info_t *qi)
+{
+	int	i;
+
+	for (i = 0; i < 8; i++) {
+		if (qi->ext[i].ie.off == 0)
+			return(i);
+	}
+	return (-1);
+}
 
 int
 mISDN_AddvarIE(Q931_info_t *qi, u_char *p, u_char *ie)
 {
-	u_char	*ps;
-	u16	*ies;
-	int	l;
+	u_char		*ps;
+	ie_info_t	*ies;
+	int		l;
 
 	ies = &qi->bearer_capability;
 	ps = (u_char *) qi;
@@ -147,9 +157,23 @@ mISDN_AddvarIE(Q931_info_t *qi, u_char *p, u_char *ie)
 			return(-2);
 		}
 		ies += _mISDN_l3_ie2pos[*ie];
+		if (ies->off) {
+			while (ies->repeated)
+				ies = &qi->ext[ies->ridx].ie;;
+			l = mISDN_get_free_ext_ie(qi);
+			if (l < 0) { // overflow
+				return(-3);
+			}
+			ies->ridx = l;
+			ies->repeated = 1;
+			ies = &qi->ext[l].ie;
+			ies->cs_flg = 0;
+			qi->ext[l].v.codeset = 0;
+			qi->ext[l].v.val = *ie;
+		}
 		l = ie[1] + 2;
 	}
-	*ies = (u16)(p - ps);
+	ies->off = (u16)(p - ps);
 	memcpy(p, ie, l);
 	return(l);
 }
@@ -157,9 +181,9 @@ mISDN_AddvarIE(Q931_info_t *qi, u_char *p, u_char *ie)
 int
 mISDN_AddIE(Q931_info_t *qi, u_char *p, u_char ie, u_char *iep)
 {
-	u_char	*ps;
-	u16	*ies;
-	int	l;
+	u_char		*ps;
+	ie_info_t	*ies;
+	int		l;
 
 	if (ie & 0x80) { /* one octett IE */
 		if (ie == IE_MORE_DATA)
@@ -180,11 +204,25 @@ mISDN_AddIE(Q931_info_t *qi, u_char *p, u_char ie, u_char *iep)
 			return(-2);
 		}
 		ies += _mISDN_l3_ie2pos[ie];
+		if (ies->off) {
+			while (ies->repeated)
+				ies = &qi->ext[ies->ridx].ie;;
+			l = mISDN_get_free_ext_ie(qi);
+			if (l < 0) { // overflow
+				return(-3);
+			}
+			ies->ridx = l;
+			ies->repeated = 1;
+			ies = &qi->ext[l].ie;
+			ies->cs_flg = 0;
+			qi->ext[l].v.codeset = 0;
+			qi->ext[l].v.val = ie;
+		}
 		l = iep[0] + 1;
 	}
 	ps = (u_char *) qi;
 	ps += L3_EXTRA_SIZE;
-	*ies = (u16)(p - ps);
+	ies->off = (u16)(p - ps);
 	*p++ = ie;
 	if (l)
 		memcpy(p, iep, l);
@@ -615,8 +653,8 @@ int do_connection(devinfo_t *di) {
 				p = buf + mISDN_HEADER_LEN;
 				qi = (Q931_info_t *)p;
 				p += L3_EXTRA_SIZE;
-				if (qi->channel_id > 0) {
-					bchannel = p[qi->channel_id+2] & 0x3;
+				if (qi->channel_id.off > 0) {
+					bchannel = p[qi->channel_id.off + 2] & 0x3;
 				} else {
 					fprintf(stdout,"no bchannel IE found\n");
 					return(2);

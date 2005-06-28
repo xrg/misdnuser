@@ -1,4 +1,4 @@
-/* $Id: mISDNif.h,v 1.1.2.1 2005/06/08 19:25:05 keil Exp $
+/* $Id: mISDNif.h,v 1.1.2.2 2005/06/28 11:34:24 keil Exp $
  *
  */
 
@@ -8,6 +8,26 @@
 #include <stdarg.h>
 #include <linux/types.h>
 #include <linux/errno.h>
+
+/*
+ * ABI Version 32 bit
+ *
+ * <16 bit> Major version
+ *		- changed if any interface become backwards incompatible
+ *
+ * <16 bit> Minor version
+ *              - changed if any interface is extended but backwards compatible
+ *
+ */
+#define	MISDN_MAJOR_VERSION	3
+#define	MISDN_MINOR_VERSION	0
+#define	MISDN_VERSION		((MISDN_MAJOR_VERSION<<16) | MISDN_MINOR_VERSION)
+
+#define MISDN_REVISION		"$Revision: 1.1.2.2 $"
+#define MISDN_DATE		"$Date: 2005/06/28 11:34:24 $"
+
+/* collect some statistics about the message queues */
+#define MISDN_MSG_STATS
 
 /* primitives for information exchange
  * generell format
@@ -19,23 +39,6 @@
  *
  */
  
-/*
- * ABI Version 32 bit
- *
- * <16 bit> Major version
- *		- changed if any interface become backwards incompatible
- *
- * <16 bit> Minor version
- *              - changed if any interface is extended but backwards compatible
- *
- */
-#define	MISDN_MAJOR_VERSION	2
-#define	MISDN_MINOR_VERSION	0
-#define	MISDN_VERSION		((MISDN_MAJOR_VERSION<<16) | MISDN_MINOR_VERSION)
-
-#define MISDN_REVISION		"$Revision: 1.1.2.1 $"
-#define MISDN_DATE		"$Date: 2005/06/08 19:25:05 $"
-
 /* SUBCOMMANDS */
 #define REQUEST		0x80
 #define CONFIRM		0x81
@@ -66,15 +69,17 @@
 #define MGR_GETLAYERID	0x0f2200
 #define MGR_NEWLAYER	0x0f2300
 #define MGR_DELLAYER	0x0f2400
-#define MGR_CLONELAYER	0x0f2500
+//#define MGR_CLONELAYER	0x0f2500
 //#define MGR_GETIF	0x0f3100
 //#define MGR_CONNECT	0x0f3200
-#define MGR_DISCONNECT	0x0f3300
+//#define MGR_DISCONNECT	0x0f3300
 //#define MGR_SETIF	0x0f3400
 //#define MGR_ADDIF	0x0f3500
 //#define MGR_QUEUEIF	0x0f3600
 #define MGR_CTRLREADY	0x0f4100
 #define MGR_STACKREADY	0x0f4200
+#define MGR_STOPSTACK	0x0f4300
+#define MGR_STARTSTACK	0x0f4400
 #define MGR_RELEASE	0x0f4500
 #define MGR_GETDEVICE	0x0f5100
 #define MGR_DELDEVICE	0x0f5200
@@ -277,6 +282,8 @@
 #define CC_TIMEOUT		0x03ff00
 
 #define CC_B3_DATA		0x138600
+
+#define CAPI_MESSAGE_REQUEST	0x040080
 
 #define LAYER_MASK	0x0F0000
 #define COMMAND_MASK	0x00FF00
@@ -503,16 +510,18 @@
 #define EXT_INST_CLONE	0x00000100
 #define EXT_INST_MGR	0x00000200
 #define EXT_INST_MIDDLE	0x00000400
-#define EXT_IF_CHAIN	0x00010000
-#define EXT_IF_EXCLUSIV	0x00020000
-#define EXT_IF_CREATE	0x00040000
-#define EXT_IF_SPLIT	0x00080000
+#define EXT_INST_UNUSED 0x00000800
+//#define EXT_IF_CHAIN	0x00010000
+//#define EXT_IF_EXCLUSIV	0x00020000
+//#define EXT_IF_CREATE	0x00040000
+//#define EXT_IF_SPLIT	0x00080000
 
 /* stack status flag (bit position) */
 #define mISDN_STACK_INIT	0
 #define mISDN_STACK_STOPPED	1
 #define mISDN_STACK_ABORT	2
 #define mISDN_STACK_KILLED	3
+#define mISDN_STACK_CLEARING	4
 
 /* special packet type */
 #define PACKET_NOACK	250
@@ -618,46 +627,76 @@ typedef struct _channel_info {
 
 /* l3 pointer arrays */
 
+typedef struct _ie_info {
+	u16	off	: 10,
+		ridx	: 3,
+		res1	: 1,
+		cs_flg	: 1,
+		repeated: 1;
+} __attribute__((packed)) ie_info_t;
+
+typedef struct _ie_val {
+	u16	codeset	: 3,
+		res1	: 5,
+		val	: 8;
+} __attribute__((packed)) ie_val_t;;
+
+typedef struct _cs_info {
+	u16	codeset	: 3,
+		locked	: 1,
+		res1	: 2,
+		len	: 10;
+} __attribute__((packed)) cs_info_t;
+
+typedef struct _ie_info_ext {
+	ie_info_t	ie;
+	union {
+		ie_val_t	v;
+		cs_info_t	cs;
+	};
+} __attribute__((packed)) ie_info_ext_t;
+
 typedef struct _Q931_info {
-	u_char	type __attribute__((packed));
-	u_char	crlen __attribute__((packed));
-	u16	cr __attribute__((packed));
-	u16	bearer_capability __attribute__((packed));
-	u16	cause __attribute__((packed));
-	u16	call_id __attribute__((packed));
-	u16	call_state __attribute__((packed));
-	u16	channel_id __attribute__((packed));
-	u16	facility __attribute__((packed));
-	u16	progress __attribute__((packed));
-	u16	net_fac __attribute__((packed));
-	u16	notify __attribute__((packed));
-	u16	display __attribute__((packed));
-	u16	date __attribute__((packed));
-	u16	keypad __attribute__((packed));
-	u16	signal __attribute__((packed));
-	u16	info_rate __attribute__((packed));
-	u16	end2end_transit __attribute__((packed));
-	u16	transit_delay_sel __attribute__((packed));
-	u16	pktl_bin_para __attribute__((packed));
-	u16	pktl_window __attribute__((packed));
-	u16	pkt_size __attribute__((packed));
-	u16	closed_userg __attribute__((packed));
-	u16	connected_nr __attribute__((packed));
-	u16	connected_sub __attribute__((packed));
-	u16	calling_nr __attribute__((packed));
-	u16	calling_sub __attribute__((packed));
-	u16	called_nr __attribute__((packed));
-	u16	called_sub __attribute__((packed));
-	u16	redirect_nr __attribute__((packed));
-	u16	transit_net_sel __attribute__((packed));
-	u16	restart_ind __attribute__((packed));
-	u16	llc __attribute__((packed));
-	u16	hlc __attribute__((packed));
-	u16	useruser __attribute__((packed));
-	u16	more_data __attribute__((packed));
-	u16	sending_complete __attribute__((packed));
-	u16	congestion_level __attribute__((packed));
-	u16	fill1 __attribute__((packed));
+	u_char		type __attribute__((packed));
+	u_char		crlen __attribute__((packed));
+	u16		cr __attribute__((packed));
+	ie_info_t	bearer_capability __attribute__((packed));
+	ie_info_t	cause __attribute__((packed));
+	ie_info_t	call_id __attribute__((packed));
+	ie_info_t	call_state __attribute__((packed));
+	ie_info_t	channel_id __attribute__((packed));
+	ie_info_t	facility __attribute__((packed));
+	ie_info_t	progress __attribute__((packed));
+	ie_info_t	net_fac __attribute__((packed));
+	ie_info_t	notify __attribute__((packed));
+	ie_info_t	display __attribute__((packed));
+	ie_info_t	date __attribute__((packed));
+	ie_info_t	keypad __attribute__((packed));
+	ie_info_t	signal __attribute__((packed));
+	ie_info_t	info_rate __attribute__((packed));
+	ie_info_t	end2end_transit __attribute__((packed));
+	ie_info_t	transit_delay_sel __attribute__((packed));
+	ie_info_t	pktl_bin_para __attribute__((packed));
+	ie_info_t	pktl_window __attribute__((packed));
+	ie_info_t	pkt_size __attribute__((packed));
+	ie_info_t	closed_userg __attribute__((packed));
+	ie_info_t	connected_nr __attribute__((packed));
+	ie_info_t	connected_sub __attribute__((packed));
+	ie_info_t	calling_nr __attribute__((packed));
+	ie_info_t	calling_sub __attribute__((packed));
+	ie_info_t	called_nr __attribute__((packed));
+	ie_info_t	called_sub __attribute__((packed));
+	ie_info_t	redirect_nr __attribute__((packed));
+	ie_info_t	transit_net_sel __attribute__((packed));
+	ie_info_t	restart_ind __attribute__((packed));
+	ie_info_t	llc __attribute__((packed));
+	ie_info_t	hlc __attribute__((packed));
+	ie_info_t	useruser __attribute__((packed));
+	ie_info_t	more_data __attribute__((packed));
+	ie_info_t	sending_complete __attribute__((packed));
+	ie_info_t	congestion_level __attribute__((packed));
+	ie_info_t	fill1 __attribute__((packed));
+	ie_info_ext_t	ext[8] __attribute__((packed));
 } Q931_info_t;
 
 #define L3_EXTRA_SIZE	sizeof(Q931_info_t)
