@@ -34,6 +34,7 @@ g711.o: g711.c $(INCLUDEDIR)/g711.h
 
 clean:
 	rm -f *.o *~ DEADJOE
+	rm -f libisdnnet.a
 
 distclean: clean
 	rm -f *.a

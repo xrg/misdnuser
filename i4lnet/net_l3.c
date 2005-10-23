@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.5 2005/04/30 15:35:08 jolly Exp $
+/* $Id: net_l3.c,v 1.5.2.1 2005/10/23 12:14:58 jolly Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -17,7 +17,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.5 $";
+const char *l3_revision = "$Revision: 1.5.2.1 $";
 
 #define PROTO_DIS_EURO	8
 

@@ -1,4 +1,4 @@
-/* $Id: net_l2.h,v 1.2 2004/07/04 14:08:14 jolly Exp $
+/* $Id: net_l2.h,v 1.2.2.1 2005/10/23 12:14:58 jolly Exp $
  *
  * Layer 2 defines
  *
@@ -61,6 +61,7 @@ static inline int CES(layer2_t *l2) {
 }
 
 /* from mISDN_l2.c */
+extern int	tei0_active(layer2_t *l2);
 extern layer2_t	*new_dl2(net_stack_t *nst, int tei);
 extern int	tei_l2(layer2_t *l2, msg_t *msg);
 extern int	Isdnl2Init(net_stack_t *nst);
