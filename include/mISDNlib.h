@@ -12,7 +12,7 @@ typedef unsigned short u16;
 
 #include <sys/types.h>
 #include <stdio.h>
-#include <mISDNif.h>
+#include "linux/mISDNif.h"
 
 #define mISDN_INBUFFER_SIZE	0x20000
 

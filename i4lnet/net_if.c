@@ -284,7 +284,7 @@ write_dmsg(net_stack_t *nst, msg_t *msg)
 	frm = (iframe_t *)msg_push(msg, mISDN_HEADER_LEN);
 	frm->prim = hh->prim;
 	frm->dinfo = hh->dinfo;
-	frm->addr = nst->l2_id | FLG_MSG_TARGET | FLG_MSG_DOWN;
+	frm->addr = nst->l2_id | FLG_MSG_DOWN;
 	frm->len = msg->len - mISDN_HEADER_LEN;
 	if (frm->prim == PH_DATA_REQ) {
 		frm->dinfo = (int)msg;

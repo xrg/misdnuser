@@ -88,7 +88,7 @@ activate_bchannel(bchannel_t *bc)
 		bc->bstate = BC_BSTATE_ACTIVATE;
 		return(if_link(bc->manager->nst,
 			(ifunc_t)bc->manager->man2stack,
-			PH_ACTIVATE | REQUEST, bc->b_addr | FLG_MSG_TARGET | FLG_MSG_DOWN,
+			PH_ACTIVATE | REQUEST, bc->b_addr | FLG_MSG_DOWN,
 			0, NULL, 0));
 	} else
 		return(-EBUSY);
@@ -109,7 +109,7 @@ deactivate_bchannel(bchannel_t *bc)
 		bc->bstate = BC_BSTATE_DEACTIVATE;
 		return(if_link(bc->manager->nst,
 			(ifunc_t)bc->manager->man2stack,
-			PH_DEACTIVATE | REQUEST, bc->b_addr | FLG_MSG_TARGET | FLG_MSG_DOWN,
+			PH_DEACTIVATE | REQUEST, bc->b_addr | FLG_MSG_DOWN,
 			0, NULL, 0));
 	} else
 		return(-EBUSY);
@@ -281,7 +281,7 @@ b_send(bchannel_t *bc)
 	if (len > MAX_DATA_SIZE)
 		len = MAX_DATA_SIZE;
 	dprint(DBGM_BCDATA, "%s:ch%d %d bytes\n", __FUNCTION__, bc->channel, len);
-	bc->smsg = prep_l3data_msg(PH_DATA | REQUEST, bc->b_addr | FLG_MSG_TARGET | FLG_MSG_DOWN,
+	bc->smsg = prep_l3data_msg(PH_DATA | REQUEST, bc->b_addr | FLG_MSG_DOWN,
 		0, len, NULL);
 	if (!bc->smsg) {
 		len = -ENOMEM;
