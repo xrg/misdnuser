@@ -12,7 +12,7 @@ EXTRA_CFLAGS :=
 EXTRA_INCLUDE :=
 EXTRA_LIB :=
 
-GSM_DIR := ../../gsm-1.0-pl6
+#GSM_DIR := ../../gsm-1.0-pl6
 
 ifdef GSM_DIR
 EXTRA_CFLAGS += -DGSM_COMPRESSION
@@ -78,6 +78,7 @@ tstparse: tstparse.o read_cfg.o
 clean:
 	rm -f *.o cfg_lex.c DEADJOE
 	find ./ -name '*~' -exec rm {} \;
+	rm -f voipisdn
 
 distclean: clean
 	rm -f *.a $(PROGRAMMS) tstparse
