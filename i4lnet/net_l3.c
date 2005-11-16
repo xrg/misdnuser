@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.5.2.1 2005/10/23 12:14:58 jolly Exp $
+/* $Id: net_l3.c,v 1.5.2.2 2005/11/16 18:58:17 crich Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -9,7 +9,6 @@
  */
 
 #include <stdlib.h>
-#include <asm/bitops.h>
 #include "mISDNlib.h"
 #include "net_l2.h"
 #include "net_l3.h"
@@ -17,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.5.2.1 $";
+const char *l3_revision = "$Revision: 1.5.2.2 $";
 
 #define PROTO_DIS_EURO	8
 

@@ -1,4 +1,4 @@
-/* $Id: net_l2.c,v 1.3.2.1 2005/10/23 12:14:58 jolly Exp $
+/* $Id: net_l2.c,v 1.3.2.2 2005/11/16 18:58:17 crich Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -13,7 +13,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l2_revision = "$Revision: 1.3.2.1 $";
+const char *l2_revision = "$Revision: 1.3.2.2 $";
 
 static void l2m_debug(struct FsmInst *fi, char *fmt, ...);
 
@@ -31,18 +31,6 @@ enum {
 };
 
 #define L2_STATE_COUNT (ST_L2_8+1)
-
-static char *strL2State[] =
-{
-	"ST_L2_1",
-	"ST_L2_2",
-	"ST_L2_3",
-	"ST_L2_4",
-	"ST_L2_5",
-	"ST_L2_6",
-	"ST_L2_7",
-	"ST_L2_8",
-};
 
 enum {
 	EV_L2_UI,

@@ -1,4 +1,4 @@
-/* $Id: net_l2.h,v 1.2.2.1 2005/10/23 12:14:58 jolly Exp $
+/* $Id: net_l2.h,v 1.2.2.2 2005/11/16 18:58:17 crich Exp $
  *
  * Layer 2 defines
  *
@@ -9,7 +9,6 @@
 #ifndef NET_L2_H
 #define NET_L2_H
 
-#include <asm/bitops.h>
 #include "mISDNlib.h"
 #include "isdn_net.h"
 #include "fsm.h"
@@ -118,4 +117,31 @@ extern void TEIFree(net_stack_t *nst);
 #define FLG_LAPD_NET	18
 #define FLG_TEI_T201_1	19
 
+
+/* Simple replacement for the NON-ATOMIC routines which asm/bitops.h
+   was providing. */
+static inline int test_bit(int bit, unsigned long *word)
+{
+	return !!((*word) & (1<<bit));
+}
+static inline int test_and_clear_bit(int bit, unsigned long *word)
+{
+	int ret = !!((*word) & (1<<bit));
+	*word &= ~(1<<bit);
+	return ret;
+}
+static inline int test_and_set_bit(int bit, unsigned long *word)
+{
+	int ret = !!((*word) & (1<<bit));
+	*word |= 1<<bit;
+	return ret;
+}
+static inline void clear_bit(int bit, unsigned long *word)
+{
+	*word &= ~(1<<bit);
+}	
+static inline void set_bit(int bit, unsigned long *word)
+{
+	*word |= 1<<bit;
+}	
 #endif
