@@ -4,6 +4,11 @@ PROGS	:= testcon testlayer3 loadfirm sendhwctrl
 
 all: $(PROGS)
 
+install:
+	for i in $(PROGS) ; do \
+		install -m 755 $$i $(INSTALL_PREFIX)/usr/bin ;\
+	done
+
 testcon: testcon.o $(mISDNLIB)
 
 testlayer3: testlayer3.o $(mISDNLIB)

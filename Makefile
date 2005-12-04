@@ -3,6 +3,13 @@
 #
 MISDNDIR := /usr/src/mqueue/mISDN
 
+#
+# Change this to create an install prefix for the shared libs, programms and
+# includes
+#
+INSTALL_PREFIX := /
+export INSTALL_PREFIX
+
 MISDNINCLUDEDIR := $(MISDNDIR)/include
 export MISDNINCLUDEDIR
 
@@ -31,6 +38,17 @@ LIBS := lib/libmISDN.a
 
 all: test_misdn_includes
 	make TARGET=$@ subdirs
+
+
+install_path:
+	mkdir -p $(INSTALL_PREFIX)/usr/bin/
+	mkdir -p $(INSTALL_PREFIX)/usr/lib/mISDNuser/
+	mkdir -p $(INSTALL_PREFIX)/usr/include/mISDNuser/
+
+install: install_path all
+	make TARGET=install subdirs
+	cp include/*.h $(INSTALL_PREFIX)/usr/include/mISDNuser/
+
 
 subdirs:
 	set -e; for i in $(SUBDIRS) ; do $(MAKE) -C $$i $(TARGET); done

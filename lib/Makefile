@@ -1,7 +1,18 @@
 
-all: libmISDN.a
+all: libmISDN.a libmISDN.so
 
-libmISDN.a: device.o layer.o stack.o status.o
+install:
+	install -m 644 libmISDN.so $(INSTALL_PREFIX)/usr/lib/mISDNuser/
+
+
+LIBMISDN_OBJS = device.o layer.o stack.o status.o
+
+libmISDN.so: $(LIBMISDN_OBJS)
+	rm -f $@
+	$(CC) -shared -Xlinker -x -o $@ $(LIBMISDN_OBJS)
+
+
+libmISDN.a: $(LIBMISDN_OBJS)
 	rm -f $@
 	ar -r $@ $^
 	ar -s $@

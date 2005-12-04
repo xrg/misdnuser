@@ -24,6 +24,11 @@ PROGRAMMS = voipisdn
 
 all: $(PROGRAMMS)
 
+install:
+	for i in $(PROGRAMMS) ; do \
+		install -m 755 $$i $(INSTALL_PREFIX)/usr/bin ;\
+	done
+
 INTERNET_PORT = 2074
 
 CARGS	= -DInternet_Port=$(INTERNET_PORT)
