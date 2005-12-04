@@ -1,10 +1,18 @@
+#
+# Set this to your local copy of mISDN
+#
+MISDNDIR := /usr/src/mqueue/mISDN
+
+MISDNINCLUDEDIR := $(MISDNDIR)/include
+export MISDNINCLUDEDIR
+
 mISDN_DIR := $(PWD)
 export mISDN_DIR
 
 INCLUDEDIR := $(mISDN_DIR)/include
 export INCLUDEDIR
 
-CFLAGS:= -g -Wall -O2 -I $(INCLUDEDIR)
+CFLAGS:= -g -Wall -O2 -I $(INCLUDEDIR) -I $(MISDNINCLUDEDIR)
 CFLAGS+= -D CLOSE_REPORT=1
 export CFLAGS
 
@@ -21,7 +29,7 @@ SUBDIRS += $(shell if test -d voip ; then echo voip; fi)
 
 LIBS := lib/libmISDN.a
 
-all:
+all: test_misdn_includes
 	make TARGET=$@ subdirs
 
 subdirs:
@@ -61,4 +69,9 @@ tenovisarchiv: archiv
 voiparchiv: ARCHIVOPT += --exclude tenovis
 voiparchiv: ARCHIVNAME := $(ARCHIVDIR)/$(MAINDIR)_voip-$(VERSION).tar.bz2
 voiparchiv: archiv
+
+
+test_misdn_includes:
+	@if ! echo "#include <linux/mISDNif.h>" | gcc -I$(MISDNINCLUDEDIR) -C -E - >/tmp/muh ; then echo -e "\n\nYou either don't seem to have installed mISDN properly\nor you haven't set the MISDNDIR variable in this very Makefile.\n\nPlease either install mISDN or set the MISDNDIR properly\n"; exit 1; fi
+
 
