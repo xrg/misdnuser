@@ -2,7 +2,7 @@
 all: libmISDN.a libmISDN.so
 
 install:
-	install -m 644 libmISDN.so $(INSTALL_PREFIX)/usr/lib/mISDNuser/
+	install -m 644 libmISDN.so $(INSTALL_PREFIX)/usr/lib
 
 
 LIBMISDN_OBJS = device.o layer.o stack.o status.o

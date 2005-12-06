@@ -2,7 +2,7 @@
 all: libisdnnet.a libisdnnet.so
 
 install:
-	install -m 644 libisdnnet.so $(INSTALL_PREFIX)/usr/lib/mISDNuser/
+	install -m 644 libisdnnet.so $(INSTALL_PREFIX)/usr/lib
 	cp *.h $(INSTALL_PREFIX)/usr/include/mISDNuser/
 
 ISDNNETOBJ = net_if.o isdn_debug.o isdn_msg.o fsm.o net_l2.o tei.o net_l3.o \
