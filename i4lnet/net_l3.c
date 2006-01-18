@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.5.2.3 2006/01/18 12:50:18 crich Exp $
+/* $Id: net_l3.c,v 1.5.2.4 2006/01/18 12:52:01 crich Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.5.2.3 $";
+const char *l3_revision = "$Revision: 1.5.2.4 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -2375,7 +2375,7 @@ send_proc(layer3_proc_t *proc, int op, void *arg)
 				proc->next->prev = proc->prev;
 			if (proc->prev)
 				proc->prev->next = proc->next;
-			if (proc->l3 && proc == proc->l3->proc)
+			if (proc->l3 && (proc == proc->l3->proc) )
 				proc->l3->proc = proc->next;
 			if (proc->master) {
 				if (proc->master->child == proc)
