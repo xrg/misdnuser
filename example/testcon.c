@@ -115,9 +115,9 @@ int play_msg(devinfo_t *di) {
 }
 
 int send_data(devinfo_t *di) {
-	unsigned char buf[MAX_DATA_BUF+mISDN_HEADER_LEN];
+	char buf[MAX_DATA_BUF+mISDN_HEADER_LEN];
 	iframe_t *frm = (iframe_t *)buf;
-	unsigned char *data;
+	char *data;
 	int len, ret;
 	
 	if (di->play<0 || !di->fplay)
@@ -151,7 +151,7 @@ int send_data(devinfo_t *di) {
 
 int setup_bchannel(devinfo_t *di) {
 	mISDN_pid_t pid;
-	int ret, i;
+	int ret;
 	layer_info_t li;
 
 
@@ -212,7 +212,8 @@ int setup_bchannel(devinfo_t *di) {
 }
 
 int send_SETUP(devinfo_t *di, int SI, char *PNr) {
-	unsigned char *np, *p, *msg, buf[1024];
+	char  *msg, buf[1024];
+	char *np,*p;
 	int len, ret;
 
 	p = msg = buf + mISDN_HEADER_LEN;

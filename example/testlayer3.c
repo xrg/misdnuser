@@ -257,9 +257,9 @@ int play_msg(devinfo_t *di) {
 }
 
 int send_data(devinfo_t *di) {
-	unsigned char buf[MAX_DATA_BUF+mISDN_HEADER_LEN];
+	char buf[MAX_DATA_BUF+mISDN_HEADER_LEN];
 	iframe_t *frm = (iframe_t *)buf;
-	unsigned char *data;
+	char *data;
 	int len, ret;
 	
 	if (di->play<0 || !di->fplay)
@@ -378,9 +378,9 @@ int send_SETUP(devinfo_t *di, int SI, char *PNr) {
 	}
 	p += len;
 	if (SI == 1) { /* Audio */
-		len = mISDN_AddIE(qi, p, IE_BEARER, "\x3\x90\x90\xa3");
+		len = mISDN_AddIE(qi, p, IE_BEARER, (unsigned char*)"\x3\x90\x90\xa3");
 	} else { /* default Datatransmission 64k */
-		len = mISDN_AddIE(qi, p, IE_BEARER, "\x2\x88\x90");
+		len = mISDN_AddIE(qi, p, IE_BEARER, (unsigned char*)"\x2\x88\x90");
 	}
 	if (len<0) {
 		fprintf(stdout,"Add IE_BEARER error %d\n", len);

@@ -25,6 +25,7 @@ typedef struct _iframe {
 		u_char  b[4];
 		void    *p;
 		int     i;
+		u_int     ui;
 	} data;
 } iframe_t;
 

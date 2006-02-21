@@ -60,7 +60,7 @@ mISDN_new_layer(int fid, layer_info_t *l_info)
 			ret = -EINVAL;
 	} else {
 		ret = 0;
-		ip = &ifr->data.p;
+		ip = &ifr->data.ui;
 		l_info->id = *ip++;
 		l_info->clone = *ip;
 	}
