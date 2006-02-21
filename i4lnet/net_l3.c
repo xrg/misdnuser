@@ -1,4 +1,4 @@
-/* $Id: net_l3.c,v 1.5.2.4 2006/01/18 12:52:01 crich Exp $
+/* $Id: net_l3.c,v 1.5.2.5 2006/02/21 18:25:03 crich Exp $
  *
  * Author       Karsten Keil (keil@isdn4linux.de)
  *
@@ -16,7 +16,7 @@
 #include "helper.h"
 // #include "debug.h"
 
-const char *l3_revision = "$Revision: 1.5.2.4 $";
+const char *l3_revision = "$Revision: 1.5.2.5 $";
 
 #define PROTO_DIS_EURO	8
 
@@ -893,8 +893,10 @@ l3dss1_release(layer3_proc_t *pc, int pr, void *arg)
 		l3dss1_message(pc, MT_RELEASE_COMPLETE);
 	if (mISDN_l3up(pc, umsg))
 		free_msg(umsg);
-	newl3state(pc, 0);
+
+/*	newl3state(pc, 0);
 	send_proc(pc, IMSG_END_PROC_M, NULL);
+*/
 }
 
 static void
