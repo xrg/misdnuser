@@ -364,7 +364,7 @@ send_setup_ack(bchannel_t *bc)
 		len = strlen(bc->display);
 		sa->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	ret = -EINVAL;
@@ -418,7 +418,7 @@ send_setup(bchannel_t *bc)
 		len = strlen(bc->display);
 		setup->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->nr[0]) {
@@ -483,7 +483,7 @@ send_proceeding(bchannel_t *bc)
 		len = strlen(bc->display);
 		proc->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	ret = -EINVAL;
@@ -537,7 +537,7 @@ send_alert(bchannel_t *bc)
 		len = strlen(bc->display);
 		at->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->fac[0]) {
@@ -587,7 +587,7 @@ send_connect(bchannel_t *bc)
 		len = strlen(bc->display);
 		conn->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->fac[0]) {
@@ -648,7 +648,7 @@ send_connect_ack(bchannel_t *bc)
 		len = strlen(bc->display);
 		ca->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	ret = -EINVAL;
@@ -693,7 +693,7 @@ send_disc(bchannel_t *bc)
 		len = strlen(bc->display);
 		disc->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->fac[0]) {
@@ -731,7 +731,7 @@ send_facility(bchannel_t *bc)
 		len = strlen(bc->display);
 		fac->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->fac[0]) {
@@ -799,7 +799,7 @@ send_rel(bchannel_t *bc)
 		len = strlen(bc->display);
 		rel->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->fac[0]) {
@@ -848,7 +848,7 @@ send_relcomp(bchannel_t *bc, int l3id, int cause) {
 		len = strlen(bc->display);
 		rc->DISPLAY = p = msg_put(msg, len+1);
 		*p++ = len;
-		strcpy(p, bc->display);
+		strcpy((char *)p, bc->display);
 		bc->display[0] = 0;
 	}
 	if (bc->fac[0]) {
@@ -1336,7 +1336,7 @@ main_bc_task(void *arg)
 					send_userinfo(bc);
 					break;
 				case CC_TIMEOUT | INDICATION:
-					dprint(DBGM_MAN,"%s: bc%d got CC_TIMEOUT\n", __FUNCTION__,
+					dprint(DBGM_MAN, -1, "%s: bc%d got CC_TIMEOUT\n", __FUNCTION__,
 						bc->channel);
 					break;
 				default:

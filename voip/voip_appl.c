@@ -1325,7 +1325,7 @@ voipscan(void *arg) {
 		if (FD_ISSET(v->dsock, &fdset)) { /* data packet */
 			v->fromlen = sizeof(struct sockaddr_in);
 			v->rlen = recvfrom(v->dsock, v->buf.d, MAX_NETBUFFER_SIZE,
-				0, (struct sockaddr *) &v->from, &v->fromlen);
+				0, (struct sockaddr *) &v->from, (socklen_t *)&v->fromlen);
 			if (v->rlen <= 0) {
 				dprint(DBGM_SOCK, -1, "D socket rlen(%d)\n",
 					v->rlen); 
@@ -1339,7 +1339,7 @@ voipscan(void *arg) {
 		if (FD_ISSET(v->csock, &fdset)) { /* ctrl packet */
 			v->fromlen = sizeof(struct sockaddr_in);
 			v->rlen = recvfrom(v->csock, v->buf.d, MAX_NETBUFFER_SIZE,
-				0, (struct sockaddr *) &v->from, &v->fromlen);
+				0, (struct sockaddr *) &v->from, (socklen_t *)&v->fromlen);
 			if (v->rlen <= 0) {
 				dprint(DBGM_SOCK, -1, "C socket rlen(%d)\n",
 					v->rlen); 

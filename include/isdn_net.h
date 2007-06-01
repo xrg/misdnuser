@@ -59,7 +59,7 @@ struct _bchannel {
 	unsigned char		cldsub[SUBADR_LEN];
 	int			cause_loc;
 	int			cause_val;
-	unsigned char		display[84];
+	char			display[84];
 	msg_t			*smsg;
 	ibuffer_t		*rbuf;
 	ibuffer_t		*sbuf;
@@ -138,8 +138,8 @@ struct _nr_list {
 	nr_list_t		*prev;
 	nr_list_t		*next;
 	unsigned char		len;
-	unsigned char		nr[MSN_LEN];
-	unsigned char		name[64];
+	char		nr[MSN_LEN];
+	char		name[64];
 	int			typ;
 	int			flags;
 };
@@ -201,7 +201,7 @@ extern	int		timer_pending(itimer_t *);
 
 extern	u_char		*findie(u_char *, int, u_char, int);
 extern	u_char		*find_and_copy_ie(u_char *, int, u_char, int, msg_t *);
-extern	void		display_NR_IE(u_char *, char *, char *);
+extern	void		display_NR_IE(u_char *, const char *, char *);
 
 extern	int		match_nr(manager_t *mgr, unsigned char *nx, nr_list_t **nrx);
 
