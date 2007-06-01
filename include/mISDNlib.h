@@ -453,5 +453,12 @@ extern int mISDNprint_status(FILE *file, status_info_t *si);
 
 extern int set_wrrd_atomic(int fid);
 extern int clear_wrrd_atomic(int fid);
+extern const char *
+mISDN_Prim_to_sub(unsigned int prim);
+extern const char *
+mISDN_Prim_to_cmd(unsigned int prim);
+
+#define FRIENDLY_PRIM_ARG(x) x, mISDN_Prim_to_cmd(x), mISDN_Prim_to_sub(x)
+
 
 #endif
