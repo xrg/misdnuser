@@ -283,6 +283,8 @@ static inline int if_link(void *farg, ifunc_t func, u_int prim, int dinfo, int l
 
 static inline msg_t *prep_l3data_msg(u_int prim, int dinfo, int ssize, int dsize, msg_t *old)
 {
+	unsigned char * pu8;
+
 	if (!old) {
 		old = alloc_msg(ssize + dsize + mISDNUSER_HEAD_SIZE + DEFAULT_HEADROOM);
 		if (!old) {
@@ -295,8 +297,17 @@ static inline msg_t *prep_l3data_msg(u_int prim, int dinfo, int ssize, int dsize
 		old->tail = old->data;
 		old->len = 0;
 	}
-	memset(msg_put(old, ssize + mISDNUSER_HEAD_SIZE), 0,
-		ssize + mISDNUSER_HEAD_SIZE);
+
+	/*
+	 * done like this because for ARM920T memset is a macro
+	 * with side-effects for the first arg
+	 * (it calls skb_put() twice if placed
+	 * directly as the first arg.
+	 * Spotted by Diego Serafin <diego.serafin@gmail.com>
+	 */
+
+	pu8 = msg_put(old, ssize + mISDNUSER_HEAD_SIZE);
+	memset(pu8, 0, ssize + mISDNUSER_HEAD_SIZE);
 	mISDN_newhead(prim, dinfo, old);
 	return(old);
 }
