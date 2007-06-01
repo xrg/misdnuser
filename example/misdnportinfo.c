@@ -5,6 +5,8 @@
 #include <string.h>
 #include <errno.h>
 
+#define BUFFER_SIZE 1025
+
 /*
  * global function to show all available isdn ports
  */
@@ -13,8 +15,8 @@ void isdn_port_info(void)
 	int err;
 	int i, ii, p;
 	int useable, nt, pri;
-	unsigned char buff[1025];
-	iframe_t *frm = (iframe_t *)buff;
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, BUFFER_SIZE);
+	iframe_t *frm = (iframe_t *)buf;
 	stack_info_t *stinf;
 	int device;
 
@@ -37,13 +39,15 @@ void isdn_port_info(void)
 	/* loop the number of cards and get their info */
 	while(i <= ii)
 	{
-		err = mISDN_get_stack_info(device, i, buff, sizeof(buff));
+		err = mISDN_get_stack_info(device, i, buf, BUFFER_SIZE);
 		if (err <= 0)
 		{
 			fprintf(stderr, "mISDN_get_stack_info() failed: port=%d err=%d\n", i, err);
 			break;
 		}
 		stinf = (stack_info_t *)&frm->data.p;
+
+		CONFIRM_ALIGN(stinf);
 
 		nt = pri = 0;
 		useable = 1;
@@ -67,6 +71,24 @@ void isdn_port_info(void)
 				printf(" HFC multiport card");
 #endif
 			break;
+
+// FIXME these constants not defined anywhere
+#if 0
+			case ISDN_PID_L0_TE_U:
+			printf("TE-mode BRI U   interface line");
+			break;
+			case ISDN_PID_L0_NT_U:
+			nt = 1;
+			printf("NT-mode BRI U   interface port");
+			break;
+			case ISDN_PID_L0_TE_UP2:
+			printf("TE-mode BRI Up2 interface line");
+			break;
+			case ISDN_PID_L0_NT_UP2:
+			nt = 1;
+			printf("NT-mode BRI Up2 interface port");
+			break;
+#endif
 			case ISDN_PID_L0_TE_E1:
 			pri = 1;
 			printf("TE-mode PRI E1  interface line (for phone lines)");
@@ -154,6 +176,11 @@ void isdn_port_info(void)
 				{
 					useable = 0;
 					printf(" -> Layer %d protocol 0x%08x is detected, but not allowed for TE lib.\n", p, stinf->pid.protocol[p]);
+					printf("    (You can see this error if"
+					    "your driver module was not started"
+					    "with an appropriate layermask="
+					    "option, eg, layermask=0xf,0xf,0xf"
+					    ",0xf)\n");
 				}
 				p++;
 			}

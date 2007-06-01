@@ -231,7 +231,7 @@ mISDN_AddIE(Q931_info_t *qi, u_char *p, u_char ie, u_char *iep)
 #endif /* MOVED_TO_LIB */
 
 int play_msg(devinfo_t *di) {
-	unsigned char buf[PLAY_SIZE+mISDN_HEADER_LEN];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, PLAY_SIZE+mISDN_HEADER_LEN);
 	iframe_t *frm = (iframe_t *)buf;
 	int len, ret;
 	
@@ -257,17 +257,17 @@ int play_msg(devinfo_t *di) {
 }
 
 int send_data(devinfo_t *di) {
-	char buf[MAX_DATA_BUF+mISDN_HEADER_LEN];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_DATA_BUF+mISDN_HEADER_LEN);
 	iframe_t *frm = (iframe_t *)buf;
 	char *data;
 	int len, ret;
 	
 	if (di->play<0 || !di->fplay)
 		return(0);
-	if (!(data = fgets(buf + mISDN_HEADER_LEN, MAX_DATA_BUF, di->fplay))) {
+	if (!(data = fgets((char *)buf + mISDN_HEADER_LEN, MAX_DATA_BUF, di->fplay))) {
 		close(di->play);
 		di->play = -1;
-		data = buf + mISDN_HEADER_LEN;
+		data = (char *)buf + mISDN_HEADER_LEN;
 		data[0] = 4; /* ctrl-D */
 		data[1] = 0;
 	}
@@ -353,7 +353,8 @@ int setup_bchannel(devinfo_t *di) {
 }
 
 int send_SETUP(devinfo_t *di, int SI, char *PNr) {
-	unsigned char *np, *p, *msg, buf[1024],ie[64];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char *np, *p, *msg, ie[64];
 	Q931_info_t *qi;
 	int len, ret;
 
@@ -406,7 +407,7 @@ int send_SETUP(devinfo_t *di, int SI, char *PNr) {
 }
 
 int activate_bchan(devinfo_t *di) {
-	unsigned char buf[128];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
 	iframe_t *rfrm;
 	int ret;
 
@@ -428,7 +429,7 @@ int activate_bchan(devinfo_t *di) {
 }
 
 int deactivate_bchan(devinfo_t *di) {
-	unsigned char buf[128];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
 	int ret;
 
 	ret = mISDN_write_frame(di->device, buf,
@@ -471,7 +472,7 @@ int send_touchtone(devinfo_t *di, int tone) {
 }
 
 int read_mutiplexer(devinfo_t *di) {
-	unsigned char	buf[MAX_REC_BUF];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_REC_BUF);
 	iframe_t	*rfrm;
 	int		timeout = TIMEOUT_10SEC;
 	int		ret = 0;
@@ -620,7 +621,8 @@ start_again:
 }
 
 int do_connection(devinfo_t *di) {
-	unsigned char *p, buf[1024];
+	unsigned char *p;
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
 	iframe_t *rfrm;
 	Q931_info_t	*qi;
 	int ret = 0;
@@ -828,7 +830,7 @@ add_dlayer4(devinfo_t *di, int prot)
 }
 
 int do_setup(devinfo_t *di) {
-	unsigned char buf[1024];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
 	iframe_t *frm = (iframe_t *)buf;
 	int i, ret = 0;
 	stack_info_t *stinf;
