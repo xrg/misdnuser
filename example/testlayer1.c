@@ -118,7 +118,7 @@ add_dlayer2(devinfo_t *di)
 
 int do_setup(devinfo_t *di)
 {
-	unsigned char buf[2048];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 2048);
 	iframe_t *frm = (iframe_t *)buf;
 	int i, ret = 0;
 	stack_info_t *stinf;
@@ -197,7 +197,7 @@ int do_setup(devinfo_t *di)
 		}
 		
 		if ((get_tick_count() - t1)  > (TICKS_PER_SEC * 5)) {
-			printf(stdout, "unable to activate layer1 (TIMEOUT)\n");
+			fprintf(stdout, "unable to activate layer1 (TIMEOUT)\n");
 			return(6);
 		}
 	}
@@ -223,8 +223,8 @@ int printhexdata(FILE *f, int len, u_char *p)
 void main_data_loop(devinfo_t *di)
 {
 	long t1;
-	unsigned char buf[2048];
-	unsigned char tx_buf[2048];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 2048);
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(tx_buf, 2048);
 		
         iframe_t *frm = (iframe_t *)buf;
         int ret, i;

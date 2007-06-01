@@ -89,7 +89,7 @@ static char tt_char[] = "0123456789ABCD*#";
 	*ptr++ = mty
 
 int play_msg(devinfo_t *di) {
-	unsigned char buf[PLAY_SIZE+mISDN_HEADER_LEN];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, PLAY_SIZE + mISDN_HEADER_LEN);
 	iframe_t *frm = (iframe_t *)buf;
 	int len, ret;
 	
@@ -115,17 +115,17 @@ int play_msg(devinfo_t *di) {
 }
 
 int send_data(devinfo_t *di) {
-	char buf[MAX_DATA_BUF+mISDN_HEADER_LEN];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_DATA_BUF);
 	iframe_t *frm = (iframe_t *)buf;
 	char *data;
 	int len, ret;
 	
 	if (di->play<0 || !di->fplay)
 		return(0);
-	if (!(data = fgets(buf + mISDN_HEADER_LEN, MAX_DATA_BUF, di->fplay))) {
+	if (!(data = fgets((char *)buf + mISDN_HEADER_LEN, MAX_DATA_BUF, di->fplay))) {
 		close(di->play);
 		di->play = -1;
-		data = buf + mISDN_HEADER_LEN;
+		data = (char *)buf + mISDN_HEADER_LEN;
 		data[0] = 4; /* ctrl-D */
 		data[1] = 0;
 	}
@@ -212,11 +212,12 @@ int setup_bchannel(devinfo_t *di) {
 }
 
 int send_SETUP(devinfo_t *di, int SI, char *PNr) {
-	char  *msg, buf[1024];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	char  *msg;
 	char *np,*p;
 	int len, ret;
 
-	p = msg = buf + mISDN_HEADER_LEN;
+	p = msg = (char *)buf + mISDN_HEADER_LEN;
 	MsgHead(p, di->cr, MT_SETUP);
 	*p++ = 0xa1; /* complete indicator */
 	*p++ = IE_BEARER;
@@ -244,7 +245,7 @@ int send_SETUP(devinfo_t *di, int SI, char *PNr) {
 }
 
 int activate_bchan(devinfo_t *di) {
-	unsigned char buf[128];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
 	iframe_t *rfrm;
 	int ret;
 
@@ -266,7 +267,7 @@ int activate_bchan(devinfo_t *di) {
 }
 
 int deactivate_bchan(devinfo_t *di) {
-	unsigned char buf[128];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
 	int ret;
 
 	ret = mISDN_write_frame(di->device, buf,
@@ -301,7 +302,8 @@ int send_touchtone(devinfo_t *di, int tone) {
 }
 
 int read_mutiplexer(devinfo_t *di) {
-	unsigned char	*p, *msg, buf[MAX_REC_BUF];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_REC_BUF);
+	unsigned char	*p, *msg;
 	iframe_t	*rfrm;
 	int		timeout = TIMEOUT_10SEC;
 	int		ret = 0;
@@ -471,10 +473,13 @@ start_again:
 }
 
 int do_connection(devinfo_t *di) {
-	unsigned char *p, *msg, buf[1024];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char *p, *msg;
 	iframe_t *rfrm;
 	int len, idx, ret = 0;
 	int bchannel;
+
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(di);
 
 	rfrm = (iframe_t *)buf;
 
@@ -590,6 +595,10 @@ add_dlayer3(devinfo_t *di, int prot)
 	stack_info_t si;
 	int lid, stid, ret;
 
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(&di);
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(&si);
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(&li);
+
 	if (di->layer3) {
 		memset(&si, 0, sizeof(stack_info_t));
 		si.extentions = EXT_STACK_CLONE;
@@ -674,11 +683,13 @@ add_dlayer3(devinfo_t *di, int prot)
 }
 
 int do_setup(devinfo_t *di) {
-	unsigned char buf[1024];
+	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
 	iframe_t *frm = (iframe_t *)buf;
 	int i, ret = 0;
 	stack_info_t *stinf;
 	status_info_t *si;
+
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(di);
 
 	di->bl2_prot = ISDN_PID_L2_B_TRANS;
 	di->bl3_prot = ISDN_PID_L3_B_TRANS;
@@ -729,6 +740,8 @@ int do_setup(devinfo_t *di) {
 		return(3);
 	}
 	stinf = (stack_info_t *)&frm->data.p;
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(stinf);
+
 	if (VerifyOn>1)
 		mISDNprint_stack_info(stdout, stinf);
 	di->d_stid = stinf->id;
@@ -774,6 +787,7 @@ int do_setup(devinfo_t *di) {
 		return(3);
 	}
 	stinf = (stack_info_t *)&frm->data.p;
+	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(stinf);
 	if (VerifyOn>1)
 		mISDNprint_stack_info(stdout, stinf);
 
@@ -796,6 +810,7 @@ int do_setup(devinfo_t *di) {
 	ret = mISDN_get_status_info(di->device, di->layer1, buf, 1024);
 	if (ret > mISDN_HEADER_LEN) {
 		si = (status_info_t *)&frm->data.p;
+		CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(si);
 		mISDNprint_status(stdout, si);
 	} else
 		fprintf(stdout,"mISDN_get_status_info ret(%d)\n", ret);
