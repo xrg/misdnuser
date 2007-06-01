@@ -75,7 +75,7 @@ cfg_lex.c: cfg.lex
 	mv lex.yy.c cfg_lex.c
 
 read_cfg.o: read_cfg.c cfg_lex.c cfg.lex iapplication.h
-
+	$(CC) -c read_cfg.c $(CFLAGS) $(CARGS)
 tstparse.o: tstparse.c
 
 tstparse: tstparse.o read_cfg.o
