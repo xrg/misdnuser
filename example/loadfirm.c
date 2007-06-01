@@ -195,7 +195,7 @@ int do_setup(devinfo_t *di, int cardnr) {
 }
 
 int
-read_firmware(unsigned char *fname)
+read_firmware(const char *fname)
 {
 	FILE *infile;
 	int  cnt;

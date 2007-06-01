@@ -68,7 +68,7 @@ struct stateentry {
 #define ALL_STATES	0x03ffffff
 
 void
-display_NR_IE(u_char *p, char *head1, char *head2)
+display_NR_IE(u_char *p, const char *head1, char *head2)
 {
 	int len;
 	char	txt[128];
@@ -2553,7 +2553,7 @@ send_proc(layer3_proc_t *proc, int op, void *arg)
 		case IMSG_RELEASE_CHILDS:
 			{
 				RELEASE_t	*rel;
-				char		cause[3];
+				unsigned char		cause[3];
 
 				cause[0] = 2;
 				cause[1] = CAUSE_LOC_PNET_LOCUSER | 0x80;

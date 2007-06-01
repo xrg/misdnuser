@@ -67,7 +67,7 @@ add_cfgnr(int  state, nr_list_t *nr, char *t, int l)
 	if (nr) {
 		switch(state) {
 			default:
-				strcpy(nr->nr, t);
+				strcpy((char *)nr->nr, t);
 				nr->len = l;
 				APPEND_TO_LIST(nr, akt_mgr->nrlist);
 				break;
@@ -83,7 +83,7 @@ add_cfgname(int  state, nr_list_t *nr, char *t, int l)
 	if (nr) {
 		switch(state) {
 			default:
-				strcpy(nr->name, t);
+				strcpy((char *)nr->name, t);
 				break;
 		}
 	}

@@ -69,7 +69,7 @@ static inline msg_t *l3_alloc_msg(int size)
 
 extern	int	Isdnl3Init(net_stack_t *);
 extern	void	cleanup_Isdnl3(net_stack_t *);
-extern	void	display_NR_IE(u_char *, char *, char *);
+extern	void	display_NR_IE(u_char *, const char *, char *);
 
 /* l3 pointer arrays */
 
