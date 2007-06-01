@@ -3,17 +3,22 @@ MAJOR=1
 MINOR=1
 SUBMINOR=3
 
+# externally define CROSS with something like
+# make CROSS=/opt/arm/bin/arm-linux-
+# to cross-compile
+
+
 #
 # Set this to your local copy of mISDN
 #
-MISDNDIR := /usr/src/mISDN
+MISDNDIR ?= /usr/src/mISDN
 
 PWD=$(shell pwd)
 #
-# Change this to create an install prefix for the shared libs, programms and
+# Change this to create an install prefix for the shared libs, programs and
 # includes
 #
-INSTALL_PREFIX := /
+INSTALL_PREFIX ?= /
 export INSTALL_PREFIX
 
 MISDNINCLUDEDIR := $(MISDNDIR)/include
@@ -28,8 +33,8 @@ export INCLUDEDIR
 LIBDIR=/usr/lib
 export LIBDIR
 
-CFLAGS:= -g -Wall -I $(INCLUDEDIR) -I $(MISDNINCLUDEDIR)
-CFLAGS+= -D CLOSE_REPORT=1
+CFLAGS += -g -Wall -I $(INCLUDEDIR) -I $(MISDNINCLUDEDIR)
+CFLAGS += -D CLOSE_REPORT=1
 
 #disable this if your system does not support PIC (position independent code)
 ifeq ($(shell uname -m),x86_64)
@@ -37,6 +42,9 @@ CFLAGS         += -fPIC
 endif
 
 export CFLAGS
+export CROSS
+export CC
+export INTERNET_PORT
 
 mISDNLIB	:= $(PWD)/lib/libmISDN.a
 mISDNNETLIB	:= $(PWD)/i4lnet/libmisdnnet.a
@@ -70,7 +78,7 @@ install: install_path all
 
 
 subdirs:
-	set -e; for i in $(SUBDIRS) ; do $(MAKE) -C $$i $(TARGET); done
+	set -e; for i in $(SUBDIRS) ; do $(MAKE) CROSS=$(CROSS) CC=$(CROSS)$(CC) CFLAGS="$(CFLAGS)" -C $$i $(TARGET); done
 
 clean:  
 	$(MAKE) TARGET=$@ subdirs
@@ -109,7 +117,14 @@ voiparchiv: archiv
 
 
 test_misdn_includes:
-	@if ! echo "#include <linux/mISDNif.h>" | gcc -I$(MISDNINCLUDEDIR) -C -E - >/dev/null ; then echo -e "\n\nYou either don't seem to have installed mISDN properly\nor you haven't set the MISDNDIR variable in this very Makefile.\n\nPlease either install mISDN or set the MISDNDIR properly\n"; exit 1; fi
+	@if ! echo "#include <linux/mISDNif.h>" | \
+	 gcc -I$(MISDNINCLUDEDIR) -C -E - >/dev/null ; then \
+	  echo -e "\n\nYou either don't seem to have installed mISDN \
+	   properly\nor you haven't set the MISDNDIR variable in this \
+	   very Makefile.\n\nPlease either install mISDN or set the \
+	    MISDNDIR properly\n" ;\
+	   exit 1 ;\
+	fi
 
 
 VERSION:
