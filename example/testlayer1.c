@@ -249,7 +249,9 @@ void main_data_loop(devinfo_t *di)
 					di->unconfirmed--;
 					break;
 				default:
-					printf ("unhandled prim(0x%x) len(0x%x)\n", frm->prim, frm->len);
+				{
+					printf("unhandled prim(0x%x) %s|%s len(0x%x)\n", FRIENDLY_PRIM_ARG(frm->prim), frm->len);
+				}
         		}
         	}
         	

@@ -639,9 +639,10 @@ int do_connection(devinfo_t *di) {
 	bchannel= -1;
 	/* Wait for a SETUP message or a CALL_PROCEEDING */
 	while ((ret = mISDN_read(di->device, buf, 1024, 3*TIMEOUT_10SEC))) {
-		if (VerifyOn>3)
-			fprintf(stdout,"readloop ret=%d addr(%08x) prim=%x dinfo=%x\n",
-				ret, rfrm->addr, rfrm->prim, rfrm->dinfo);
+		if (VerifyOn>3) {
+			fprintf(stdout,"readloop ret=%d addr(%08x) prim=%x (%s|%s) dinfo=%x\n",
+				ret, rfrm->addr, FRIENDLY_PRIM_ARG(rfrm->prim), rfrm->dinfo);
+		}
 		if (ret >= 16) {
 			if ((!(di->flag & FLG_CALL_ORGINATE)) &&
 				(rfrm->prim == (CC_NEW_CR | INDICATION))) {

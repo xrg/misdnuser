@@ -316,8 +316,8 @@ start_again:
 			fprintf(stdout,"readloop ret=%d\n", ret);
 		if (ret >= 16) {
 			if (VerifyOn>4)
-				fprintf(stdout,"readloop addr(%x) prim(%x) len(%d)\n",
-					rfrm->addr, rfrm->prim, rfrm->len);
+				fprintf(stdout,"readloop addr(%x) prim(%x %s|%s) len(%d)\n",
+					rfrm->addr, FRIENDLY_PRIM_ARG(rfrm->prim), rfrm->len);
 			if (rfrm->addr == (di->b_l2[di->used_bchannel] | FLG_MSG_UP)) {
 				/* B-Channel related messages */
 				if (rfrm->prim == (DL_DATA | INDICATION)) {
@@ -785,8 +785,10 @@ int do_setup(devinfo_t *di) {
 	if (VerifyOn>3)
 		fprintf(stdout,"dl_etablish read ret=%d\n", ret);
 	if (ret>0) {
-		if (frm->prim != (DL_ESTABLISH | CONFIRM))
+		if (frm->prim != (DL_ESTABLISH | CONFIRM)) {
+			fprintf(stdout,"do_setup: frm->prim that came back wasn't (DL_ESTABLISH | CONFIRM), was 0x%08X %s|%s  (ret=%d)\n", FRIENDLY_PRIM_ARG(frm->prim), ret);
 			return(6);
+		}
 	} else {
 		fprintf(stdout,"DL_ESTABLISH | REQUEST return(%d)\n", ret);
 		return(7);
