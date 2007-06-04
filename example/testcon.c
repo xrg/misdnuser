@@ -10,6 +10,12 @@
 #include "mISDNlib.h"
 #include "l3dss1.h"
 
+#ifdef __arm__
+#include <signal.h>
+#endif
+
+volatile int ctrl_c_seen = 0;
+
 void usage(pname) 
 char *pname;
 {
@@ -313,7 +319,8 @@ int read_mutiplexer(devinfo_t *di) {
 	/* Main loop */
 
 start_again:
-	while ((ret = mISDN_read(di->device, buf, MAX_REC_BUF, timeout))) {
+	while ((ret = mISDN_read(di->device, buf, MAX_REC_BUF, timeout)) &&
+	    !ctrl_c_seen ) {
 		if (VerifyOn>3)
 			fprintf(stdout,"readloop ret=%d\n", ret);
 		if (ret >= 16) {
@@ -436,6 +443,10 @@ start_again:
 			}
 		}
 	}
+
+	if (ctrl_c_seen)
+		return 1;
+
 	if (di->flag & FLG_SEND_TONE) {
 		if (di->val) {
 			di->val--;
@@ -824,6 +835,23 @@ int do_setup(devinfo_t *di) {
 	return(0);
 }
 
+#ifdef __arm__
+static void
+signal_handler_term(int signum)
+{
+	fprintf(stderr, "*** BUS SIGNAL **\n");
+	exit(0);
+}
+#endif
+
+static void
+signal_handler_ctrl_c(int signum)
+{
+	fprintf(stderr, "*** CTRL-C seen ***\n");
+	ctrl_c_seen = 1;
+}
+
+
 int main(argc,argv)
 int argc;
 char *argv[];
@@ -834,8 +862,36 @@ char *argv[];
 	char sw;
 	devinfo_t mISDN;
 	int err;
+	struct sigaction sa;
 
-	fprintf(stderr,"TestmISDN 1.0\n");
+#ifdef __arm__
+
+	{
+		FILE * pfile = fopen("/proc/cpu/alignment", "w");
+		fwrite("4", 1, 1, pfile);
+		fclose(pfile);
+
+		sigemptyset(&(sa.sa_mask));
+		sa.sa_handler = signal_handler_term;
+		sa.sa_flags = 0;
+		if (sigaction(SIGBUS, &sa, NULL)) {
+			perror("SIGTERM handler");
+			return (1);
+		}
+ 	}
+
+#endif
+
+	sigemptyset(&(sa.sa_mask));
+	sa.sa_handler = signal_handler_ctrl_c;
+	sa.sa_flags = 0;
+	if (sigaction(SIGINT, &sa, NULL)) {
+		perror("SIGINT handler");
+		return (1);
+	}
+
+
+	fprintf(stderr,"testcon 1.1\n");
 	strcpy(FileName, "test_file");
 	memset(&mISDN, 0, sizeof(mISDN));
 	mISDN.cardnr = 1;
