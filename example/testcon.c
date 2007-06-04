@@ -10,9 +10,7 @@
 #include "mISDNlib.h"
 #include "l3dss1.h"
 
-#ifdef __arm__
 #include <signal.h>
-#endif
 
 volatile int ctrl_c_seen = 0;
 
