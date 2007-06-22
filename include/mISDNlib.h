@@ -20,7 +20,7 @@ typedef unsigned short u16;
 #include <stdio.h>
 #include "linux/mISDNif.h"
 
-#ifdef __arm__
+#if defined(__arm__) || defined(__BLACKFIN__)
 #define ALIGNED_TO_INT_BOUNDARY(x) ((x) + ((sizeof(int)-((long)(x) & (sizeof(int)-1))) & (sizeof(int)-1)))
 #define CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(x) if ((int)(x)&(sizeof(int)-1)) { fprintf(stderr, "%s %d: %s() %s (%p) not on int alignment\n",  __FILE__, __LINE__, __FUNCTION__, #x, x); return -1; }
 #define CONFIRM_ALIGN(x) if ((int)(x)&(sizeof(int)-1)) { fprintf(stderr, "%s %d: %s() %s (%p) not on int alignment\n", __FILE__, __LINE__, __FUNCTION__, #x, x); }

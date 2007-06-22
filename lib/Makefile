@@ -1,6 +1,6 @@
-CC = gcc
-AR = ar
-RANLIB = ranlib
+CC ?= gcc
+AR ?= ar
+RANLIB ?= ranlib
 
 all: libmISDN.a libmISDN_pic.a libmISDN.so
 

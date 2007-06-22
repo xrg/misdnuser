@@ -1,6 +1,6 @@
-CC = gcc
-AR = ar
-RANLIB = ranlib
+CC ?= gcc
+AR ?= ar
+RANLIB ?= ranlib
 
 all: libisdnnet.a libisdnnet_pic.a libisdnnet.so
 

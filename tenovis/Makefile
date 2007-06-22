@@ -16,9 +16,10 @@ install:
 	done
 
 testlib: testlib.o $(TENOVISLIB) $(mISDNLIB)
+	$(CC) $^ $(LDFLAGS_EXTRA) -o $@
 
 tstlib: tstlib.o $(TENOVISLIB) $(mISDNLIB)
-
+	$(CC) $^ $(LDFLAGS_EXTRA) -o $@
 
 testlib.o : testlib.c ../include/l3dss1.h $(LIBINCL) $(TENOVISINC)
 

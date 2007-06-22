@@ -397,8 +397,13 @@ int main (int argc, char *argv[])
 		exit(1);
 	}
 
+#ifdef __BLACKFIN__
+	if (arg_daemon)
+		fail("Unsupported daemon mode on Blackfin processor");
+#else
 	if (arg_daemon && daemon(1, 0))
 		fail("daemon()");
+#endif
 
 	init_ports();
 
@@ -417,13 +422,13 @@ int main (int argc, char *argv[])
 		if (size < 0)
 			fail_perr("recvfrom()");
 		if (size < sizeof(mISDN_dt_header_t)) {
-			printf("Invalid Packet! (size(%d) < %d)\n", size, sizeof(mISDN_dt_header_t));
+			printf("Invalid Packet! (size(%d) < %d)\n", (int)size, (int)sizeof(mISDN_dt_header_t));
 			continue;
 		}
 		
 		mISDN_dt_header_t *hdr = (mISDN_dt_header_t *)buf;
 		if (hdr->plength + sizeof(mISDN_dt_header_t) != size) {
-			printf("Invalid Packet! (plen:%d, but size:%d)\n", hdr->plength, size);
+			printf("Invalid Packet! (plen:%d, but size:%d)\n", hdr->plength, (int)size);
 			continue;
 		}
 

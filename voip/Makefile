@@ -20,6 +20,10 @@ EXTRA_INCLUDE += -I$(GSM_DIR)/inc
 EXTRA_LIB += $(GSM_DIR)/lib/libgsm.a
 endif
 
+ifeq "$(ARCH)_" "bfin-uclinux_"
+	LIB_PATHS=-L$(INSTALL_PREFIX)/usr/lib
+endif
+
 PROGRAMMS = voipisdn
 
 all: $(PROGRAMMS)
@@ -35,7 +39,7 @@ CARGS	= -DInternet_Port=$(INTERNET_PORT)
 
 CCFLAGS	= -O3 -DLINUX -DM_LITTLE_ENDIAN
 
-LFLAGS	= -lncurses -lm -lrt -lpthread
+LFLAGS	= $(LIB_PATHS) -lncurses -lm -lrt -lpthread
 
 DEBUG	= -g -DHEXDUMP
 

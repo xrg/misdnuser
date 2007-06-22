@@ -41,10 +41,15 @@ ifeq ($(shell uname -m),x86_64)
 CFLAGS         += -fPIC
 endif
 
+ifeq "$(ARCH)_" "bfin-uclinux_"
+CFLAGS += -D__BLACKFIN__
+endif
+
 export CFLAGS
 export CROSS
 export CC
 export INTERNET_PORT
+export LDFLAGS
 
 mISDNLIB	:= $(PWD)/lib/libmISDN.a
 mISDNNETLIB	:= $(PWD)/i4lnet/libmisdnnet.a
