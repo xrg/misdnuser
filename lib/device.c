@@ -51,7 +51,7 @@ mISDN_open(void)
 	int		fid;
 	mISDNdev_t	*dev;
 
-	
+
 	if (0>(fid = open(mISDN_DEVICE, O_RDWR | O_NONBLOCK)))
 		return(fid);
 	pthread_mutex_lock(&devlist_lock);
@@ -67,7 +67,7 @@ mISDN_open(void)
 			__FUNCTION__, dev->fid, dev, fid);
 		close(fid);
 		errno = EBUSY;
-		return(-1); 
+		return(-1);
 	}
 	dev = malloc(sizeof(mISDNdev_t));
 	if (!dev) {
@@ -90,7 +90,7 @@ mISDN_open(void)
 	dev->iend = dev->inbuf;
 	pthread_mutex_init(&dev->rmutex, NULL);
 	pthread_mutex_init(&dev->wmutex, NULL);
-	
+
 	pthread_mutex_lock(&devlist_lock);
 	dev->prev = devlist;
 	while(dev->prev && dev->prev->next)
@@ -130,7 +130,7 @@ mISDN_close(int fid)
 	pthread_mutex_lock(&dev->rmutex);
 #ifdef CLOSE_REPORT
 	fprintf(stderr, "%s: fid(%d) isize(%d) inbuf(%p) irp(%p) iend(%p)\n",
-		__FUNCTION__, fid, dev->isize, dev->inbuf, dev->irp, dev->iend);	
+		__FUNCTION__, fid, dev->isize, dev->inbuf, dev->irp, dev->iend);
 #endif
 	if (dev->inbuf)
 		free(dev->inbuf);
@@ -161,8 +161,6 @@ mISDN_remove_iframe(mISDNdev_t *dev, iframe_packed_t *frm)
 	u_char	*ep;
 	int	len;
 
-//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(frm);
-
 	if (frm->len > 0)
 		len = mISDN_HEADER_LEN + frm->len;
 	else
@@ -173,9 +171,9 @@ mISDN_remove_iframe(mISDNdev_t *dev, iframe_packed_t *frm)
 		dev->iend = (u_char *)frm;
 	else {
 		memcpy(frm, ep, dev->iend - ep);
-		dev->iend -= len; 
+		dev->iend -= len;
 	}
-	
+
 	return(dev->iend - dev->irp);
 }
 
@@ -190,7 +188,7 @@ mISDN_read(int fid, void *buf, size_t count, int utimeout) {
 	struct timespec	ts;
 #endif
 
-	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
+	//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
 
 	pthread_mutex_lock(&devlist_lock);
 	dev = devlist;
@@ -362,7 +360,7 @@ static iframe_packed_t *
 mISDN_find_iframe(mISDNdev_t *dev, u_int addr, u_int prim) {
 	iframe_packed_t	*frm;
 	u_char		*rp;
-	
+
 	rp = dev->irp;
 	while(rp<dev->iend) {
 		if ((dev->iend - rp) < mISDN_HEADER_LEN) {
@@ -392,7 +390,7 @@ mISDN_read_frame(int fid, void *buf, size_t count, u_int addr, u_int msgtype,
 #ifdef MUTEX_TIMELOCK
 	struct timespec	ts;
 #endif
-	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
+	//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
 
 	pthread_mutex_lock(&devlist_lock);
 	dev = devlist;
@@ -530,7 +528,6 @@ mISDN_write(int fid, void *buf, size_t count, int utimeout) {
 	struct timespec	ts;
 	int		ret;
 #endif
-	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
 
 	pthread_mutex_lock(&devlist_lock);
 	dev = devlist;
@@ -606,12 +603,9 @@ int
 mISDN_write_frame(int fid, void *fbuf, u_int addr, u_int msgtype,
 		int dinfo, int dlen, void *dbuf, int utimeout)
 {
-	iframe_t        *ifr = fbuf;
-	int		len = mISDN_HEADER_LEN;
-	int		ret;
-
-	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(fbuf);
-	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(dbuf);
+	iframe_packed_t  *ifr = fbuf;
+	int		 len = mISDN_HEADER_LEN;
+	int		 ret;
 
 	if (!fbuf) {
 		errno = EINVAL;
@@ -664,7 +658,7 @@ mISDN_select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		}
 		pthread_mutex_unlock(&devlist_lock);
 	}
-	
+
 	return(select(n, readfds, writefds, exceptfds, timeout));
 }
 

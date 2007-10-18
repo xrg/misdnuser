@@ -21,21 +21,21 @@ mISDN_get_layerid(int fid, int stack, int layer)
 	if (ret != mISDN_HEADER_LEN) {
 		if (ret>0)
 			ret = -EINVAL;
-			 
+
 	} else {
 		if (ifr.len)
 			ret = ifr.len;
-		else	
+		else
 			ret = ifr.dinfo;
 	}
 	return(ret);
 }
 
-int 
+int
 mISDN_new_layer(int fid, layer_info_t *l_info)
 {
 	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, sizeof(layer_info_t) + mISDN_HEADER_LEN);
-	iframe_t	*ifr = (iframe_t *)buf;
+	iframe_packed_t	*ifr = (iframe_t *)buf;
 	int		ret;
 
 	printf("buf=%p, ifr=%p\n", buf, ifr);
@@ -60,18 +60,18 @@ mISDN_new_layer(int fid, layer_info_t *l_info)
 		else if (ret>0)
 			ret = -EINVAL;
 	} else {
-		unsigned int * pui = (unsigned int *)&ifr->data.uip[0];
 		ret = 0;
 
-		l_info->id = pui[0];
-		l_info->clone = pui[1];
+		memcpy(&l_info->id, &ifr->data.uip, sizeof(l_info->id));
+		memcpy(&l_info->clone, &ifr->data.uip + sizeof(l_info->id),
+		       sizeof(l_info->clone));
 	}
 
 	return(ret);
 }
 
 int
-mISDN_register_layer(int fid, u_int sid, u_int lid) 
+mISDN_register_layer(int fid, u_int sid, u_int lid)
 {
 	iframe_t	ifr;
 	int		ret;
@@ -79,7 +79,7 @@ mISDN_register_layer(int fid, u_int sid, u_int lid)
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, &ifr, sid, MGR_REGLAYER | REQUEST, lid,
 		0, NULL, TIMEOUT_1SEC);
-//	fprintf(stderr, "%s: wret %d\n", __FUNCTION__, ret); 
+//	fprintf(stderr, "%s: wret %d\n", __FUNCTION__, ret);
 	if (ret) {
 		clear_wrrd_atomic(fid);
 		return(ret);
@@ -97,7 +97,7 @@ mISDN_register_layer(int fid, u_int sid, u_int lid)
 }
 
 int
-mISDN_unregister_layer(int fid, u_int sid, u_int lid) 
+mISDN_unregister_layer(int fid, u_int sid, u_int lid)
 {
 	iframe_t	ifr;
 	int		ret;
@@ -105,7 +105,7 @@ mISDN_unregister_layer(int fid, u_int sid, u_int lid)
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, &ifr, sid, MGR_UNREGLAYER | REQUEST, lid,
 		0, NULL, TIMEOUT_1SEC);
-//	fprintf(stderr, "%s: wret %d\n", __FUNCTION__, ret); 
+//	fprintf(stderr, "%s: wret %d\n", __FUNCTION__, ret);
 	if (ret) {
 		clear_wrrd_atomic(fid);
 		return(ret);
@@ -147,7 +147,7 @@ mISDN_connect(int fid, interface_info_t *i_info)
 	unsigned char	buf[sizeof(interface_info_t) + mISDN_HEADER_LEN];
 	iframe_t	ifr;
 	int		ret;
-	
+
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, ALIGNED_TO_INT_BOUNDARY(buf), 0, MGR_CONNECT | REQUEST,
 		0, sizeof(interface_info_t), i_info, TIMEOUT_1SEC);
@@ -160,7 +160,7 @@ mISDN_connect(int fid, interface_info_t *i_info)
 	clear_wrrd_atomic(fid);
 	if (ret != mISDN_HEADER_LEN) {
 		if (ret > 0)
-			ret = -1; 
+			ret = -1;
 	} else {
 		if (ifr.len)
 			ret = ifr.len;
@@ -211,7 +211,7 @@ int
 mISDN_get_interface_info(int fid, interface_info_t *i_info)
 {
 	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, sizeof(interface_info_t) + mISDN_HEADER_LEN);
-	iframe_t	*ifr = (iframe_t *)buf;
+	iframe_packed_t	*ifr = (iframe_t *)buf;
 	int		ret;
 
 	set_wrrd_atomic(fid);

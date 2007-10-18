@@ -19,7 +19,7 @@ do_net_stack_setup(net_stack_t	*nst)
 #ifdef OBSOLETE
 	interface_info_t ii;
 #endif
-	
+
 
 	if (!nst)
 		return(-EINVAL);
@@ -192,12 +192,12 @@ remove_timer(itimer_t *it)
 	iframe_t	frm;
 	int		ret;
 
-	
+
 	if (!it->nst)
 		return(-ENODEV);
 	if (!get_timer(it->nst, it->id))
 		return(-ENODEV);
-	
+
 	ret = mISDN_write_frame(it->nst->device, &frm, it->id,
 		MGR_REMOVETIMER | REQUEST, 0, 0, NULL, TIMEOUT_1SEC);
 	if (ret)
@@ -274,14 +274,14 @@ handle_timer(net_stack_t *nst, int id)
 int
 write_dmsg(net_stack_t *nst, msg_t *msg)
 {
-	iframe_t	*frm;
-	mISDNuser_head_t	*hh;
+	iframe_packed_t	 *frm;
+	mISDNuser_head_t *hh;
 
 	hh = (mISDNuser_head_t *)msg->data;
 	dprint(DBGM_NET, nst->cardnr, "%s: msg(%p) len(%d) pr(%x) di(%x) q(%d)\n", __FUNCTION__,
 		msg, msg->len, hh->prim, hh->dinfo, nst->phd_down_msg?1:0);
 	msg_pull(msg, mISDNUSER_HEAD_SIZE);
-	frm = (iframe_t *)msg_push(msg, mISDN_HEADER_LEN);
+	frm = (iframe_packed_t *)msg_push(msg, mISDN_HEADER_LEN);
 	frm->prim = hh->prim;
 	frm->dinfo = hh->dinfo;
 	frm->addr = nst->l2_id | FLG_MSG_DOWN;
@@ -323,9 +323,9 @@ static int
 do_net_read(net_stack_t *nst)
 {
 	msg_t		*msg;
-	iframe_t	*frm;
+	iframe_packed_t	*frm;
 	int		ret;
-	
+
 	msg = alloc_msg(MAX_MSG_SIZE);
 	if (!msg)
 		return(-ENOMEM);
@@ -343,8 +343,8 @@ do_net_read(net_stack_t *nst)
 		return(-EINVAL);
 	}
 	__msg_trim(msg, ret);
-	frm = (iframe_t *)msg->data;
-	
+	frm = (iframe_packed_t *)msg->data;
+
 	dprint(DBGM_NET, nst->cardnr,"%s: prim(%x) addr(%x)\n", __FUNCTION__,
 		frm->prim, frm->addr);
 	switch (frm->prim) {
@@ -374,7 +374,7 @@ b_message(net_stack_t *nst, int ch, iframe_t *frm, msg_t *msg)
 	if (nst->l3_manager)
 		return(nst->l3_manager(nst->manager, msg));
 	return(-EINVAL);
-	
+
 }
 
 static int
@@ -385,8 +385,8 @@ do_readmsg(net_stack_t *nst, msg_t *msg)
 
 	if (!nst || !msg)
 		return(-EINVAL);
-	frm = (iframe_t *)msg->data;
-	
+	frm = (iframe_packed_t *)msg->data;
+
 	dprint(DBGM_NET, nst->cardnr,"%s: prim(%x) addr(%x)\n", __FUNCTION__,
 		frm->prim, frm->addr);
 	if (frm->prim == (MGR_TIMER | INDICATION)) {
@@ -422,7 +422,7 @@ do_readmsg(net_stack_t *nst, msg_t *msg)
 	return(ret);
 }
 
-static int 
+static int
 setup_bchannel(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg) {
 	mISDN_pid_t	*pid;
 	int		ret, ch, *id;
@@ -480,7 +480,7 @@ setup_bchannel(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg) {
 			&nst->b_addr[ch], 0);
 		free_msg(msg);
 		return(0);
-	} 
+	}
 error:
 	if_link(nst->manager, (ifunc_t)nst->l3_manager, BC_SETUP | SUB_ERROR,
 		nst->bcid[ch], sizeof(int), &ret, 0);
@@ -488,7 +488,7 @@ error:
 	return(0);
 }
 
-static int 
+static int
 cleanup_bc(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg)
 {
 	unsigned char	buf[32];
@@ -501,7 +501,7 @@ cleanup_bc(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg)
 	else {
 		wprint("%s:not channel match %x %x/%x\n", __FUNCTION__,
 			hh->dinfo, nst->bcid[0], nst->bcid[1]);
-		
+
 		if_link(nst->manager, (ifunc_t)nst->l3_manager,
 			BC_CLEANUP | SUB_ERROR, hh->dinfo, 0, NULL, 0);
 		free_msg(msg);
@@ -522,13 +522,13 @@ cleanup_bc(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg)
 static int
 l1_request(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg)
 {
-	iframe_t	*frm;
+	iframe_packed_t	*frm;
 
 	hh = (mISDNuser_head_t *)msg->data;
 	dprint(DBGM_NET, nst->cardnr, "%s: msg(%p) len(%d) pr(%x) di(%x)\n", __FUNCTION__,
 		msg, msg->len, hh->prim, hh->dinfo);
 	msg_pull(msg, mISDNUSER_HEAD_SIZE);
-	frm = (iframe_t *)msg_push(msg, mISDN_HEADER_LEN);
+	frm = (iframe_packed_t *)msg_push(msg, mISDN_HEADER_LEN);
 	frm->prim = hh->prim;
 	frm->addr = hh->dinfo;
 	if (frm->prim == PH_DATA_REQ)
@@ -588,7 +588,7 @@ main_readloop(void *arg)
 	int		sel, ret;
 	int		maxfd;
 	fd_set		rfd;
-	fd_set		efd; 
+	fd_set		efd;
 	pthread_t	tid;
 
 
@@ -668,7 +668,7 @@ do_netthread(void *arg) {
 				free_msg(msg);
 			}
 		}
-		
+
 		msg = msg_dequeue(&nst->rqueue);
 		if (msg) {
 			ret = do_readmsg(nst, msg);

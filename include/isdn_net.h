@@ -208,7 +208,11 @@ extern	int		match_nr(manager_t *mgr, unsigned char *nx, nr_list_t **nrx);
 typedef struct _mISDNuser_head {
 	u_int	prim;
 	int	dinfo;
+#if defined(__arm__) || defined(__BLACKFIN__)
+} __attribute__ ((packed)) mISDNuser_head_t;
+#else
 } mISDNuser_head_t;
+#endif
 
 #define mISDNUSER_HEAD_SIZE	sizeof(mISDNuser_head_t)
 
