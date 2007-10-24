@@ -140,6 +140,13 @@ newl3state(layer3_proc_t *pc, int state)
 }
 
 static void
+L3t310Expire(L3Timer_t *t)
+{
+	printf("T310 Expired\n");
+	remove_proc(&t->nst->layer3->proc, dinfo);
+}
+
+static void
 L3ExpireTimer(L3Timer_t *t)
 {
 	if (t->pc->l3->debug & L3_DEB_STATE)
@@ -2975,7 +2982,11 @@ l3_msg(layer3_t *l3, u_int pr, int dinfo, void *arg)
 				break;
 			if (l3->nst->l3_manager(l3->nst->manager, lmsg))
 				free_msg(lmsg);
-			remove_proc(&l3->proc, dinfo);
+			
+			init_timer(&l3->timer.tl, l3->nst);
+			&l3->timer.nr = 0x310;
+			&l3->timer.expires = T310;
+			add_timer(&&l3->timer.tl);
 			break;
 		case (DL_RELEASE | CONFIRM):
 			if (ces == 0) {
@@ -3021,6 +3032,12 @@ int Isdnl3Init(net_stack_t *nst)
 	msg_queue_init(&l3->squeue0);
 	l3->l2_state0 = ST_L3_LC_REL;
 	APPEND_TO_LIST(l3, nst->layer3);
+
+	l3->timer.pc=NULL;
+	l3->timer.tl.function = (void *) L3t310Expire
+	tl3->timer.tl.data = (long) t;
+	init_timer(&l3->timer->tl, l3->nst);
+
 	return(0);
 }
 
