@@ -63,6 +63,28 @@ static int encodeFacCDeflection (__u8 *dest, struct FacCDeflection *CD)
 	return encodeInvokeComponentLength(dest, p);
 }
 
+static int encodeFacActivationDiversion (__u8 *dest, struct FacCFActivate*CD)
+{
+	__u8 *p;
+	p = encodeInvokeComponentHead(dest, IE_FACILITY);
+	p += encodeInt(p, 0x02);
+	p += encodeInt(p, 7); // ActivateDiversion
+	p += encodeActivationDiversion(p, CD);
+	return encodeInvokeComponentLength(dest, p);
+}
+
+static int encodeFacDeactivationDiversion (__u8 *dest, struct FacCFDeactivate*CD)
+{
+	__u8 *p;
+	p = encodeInvokeComponentHead(dest, IE_FACILITY);
+	p += encodeInt(p, 0x02);
+	p += encodeInt(p, 8); // DeactivateDiversion
+	p += encodeDeactivationDiversion(p, CD);
+	return encodeInvokeComponentLength(dest, p);
+}
+
+
+
 int encodeFac (__u8 *dest, struct FacParm *fac)
 {
 	int len = -1;
@@ -73,8 +95,14 @@ int encodeFac (__u8 *dest, struct FacParm *fac)
 	case Fac_Listen:
 	case Fac_Suspend:
 	case Fac_Resume:
+	case Fac_RESULT:
+	break;
 	case Fac_CFActivate:
+		len = encodeFacActivationDiversion(dest, &(fac->u.CFActivate));
+	break;
 	case Fac_CFDeactivate:
+		len = encodeFacDeactivationDiversion(dest, &(fac->u.CFDeactivate));
+	break;
 	case Fac_CFInterrogateParameters:
 	case Fac_CFInterrogateNumbers:
 	case Fac_AOCDCurrency:
@@ -144,7 +172,13 @@ int decodeFac (__u8 *src, struct FacParm *fac)
 		}
 		break;
 	case returnResult:
+		fac->Function = Fac_RESULT;
+		return 0;
 	case returnError:
+		fac->Function = Fac_ERROR;
+		fac->u.ERROR.errorValue = pc.u.retError.errorValue;
+		strcpy(fac->u.ERROR.error, pc.u.retError.error);
+		return 0;
 	case reject:
 		goto _dec_err;
 	}

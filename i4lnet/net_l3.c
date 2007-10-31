@@ -1591,6 +1591,8 @@ l3dss1_setup_req(layer3_proc_t *pc, int pr, void *arg)
 		AddvarIE(pc, IE_CALLED_PN, setup->CALLED_PN);
 	if (setup->CALLED_SUB)
 		AddvarIE(pc, IE_CALLED_SUB, setup->CALLED_SUB);
+	if (setup->REDIR_NR)
+		AddvarIE(pc, IE_REDIR_NR, setup->REDIR_NR);
 	if (setup->LLC)
 		AddvarIE(pc, IE_LLC, setup->LLC);
 	if (setup->HLC)
@@ -2106,7 +2108,7 @@ l3dss1_holdrej_req(layer3_proc_t *pc, int pr, void *arg)
 			*pc->op++ = IE_CAUSE;
 			*pc->op++ = 2;
 			*pc->op++ = 0x80;
-			*pc->op++ = 0x80 | 0x47;
+			*pc->op++ = 0x80 | 47;
 		}
 		if (hrej->DISPLAY)
 			AddvarIE(pc, IE_DISPLAY, hrej->DISPLAY);
@@ -2114,7 +2116,7 @@ l3dss1_holdrej_req(layer3_proc_t *pc, int pr, void *arg)
 		*pc->op++ = IE_CAUSE;
 		*pc->op++ = 2;
 		*pc->op++ = 0x80;
-		*pc->op++ = 0x80 | 0x47;
+		*pc->op++ = 0x80 | 47;
 	}
 	SendMsg(pc, -1);
 }
@@ -2155,7 +2157,7 @@ l3dss1_retrrej_req(layer3_proc_t *pc, int pr, void *arg)
 			*pc->op++ = IE_CAUSE;
 			*pc->op++ = 2;
 			*pc->op++ = 0x80;
-			*pc->op++ = 0x80 | 0x47;
+			*pc->op++ = 0x80 | 47;
 		}
 		if (rrej->DISPLAY)
 			AddvarIE(pc, IE_DISPLAY, rrej->DISPLAY);
@@ -2163,7 +2165,7 @@ l3dss1_retrrej_req(layer3_proc_t *pc, int pr, void *arg)
 		*pc->op++ = IE_CAUSE;
 		*pc->op++ = 2;
 		*pc->op++ = 0x80;
-		*pc->op++ = 0x80 | 0x47;
+		*pc->op++ = 0x80 | 47;
 	}
 	SendMsg(pc, -1);
 }
@@ -2201,7 +2203,7 @@ l3dss1_susprej_req(layer3_proc_t *pc, int pr, void *arg)
 			*pc->op++ = IE_CAUSE;
 			*pc->op++ = 2;
 			*pc->op++ = 0x80;
-			*pc->op++ = 0x80 | 0x47;
+			*pc->op++ = 0x80 | 47;
 		}
 		if (srej->DISPLAY)
 			AddvarIE(pc, IE_DISPLAY, srej->DISPLAY);
@@ -2209,7 +2211,7 @@ l3dss1_susprej_req(layer3_proc_t *pc, int pr, void *arg)
 		*pc->op++ = IE_CAUSE;
 		*pc->op++ = 2;
 		*pc->op++ = 0x80;
-		*pc->op++ = 0x80 | 0x47;
+		*pc->op++ = 0x80 | 47;
 	}
 	SendMsg(pc, -1);
 	newl3state(pc, 10);
@@ -2249,7 +2251,7 @@ l3dss1_resrej_req(layer3_proc_t *pc, int pr, void *arg)
 			*pc->op++ = IE_CAUSE;
 			*pc->op++ = 2;
 			*pc->op++ = 0x80;
-			*pc->op++ = 0x80 | 0x47;
+			*pc->op++ = 0x80 | 47;
 		}
 		if (rrej->DISPLAY)
 			AddvarIE(pc, IE_DISPLAY, rrej->DISPLAY);
@@ -2257,7 +2259,7 @@ l3dss1_resrej_req(layer3_proc_t *pc, int pr, void *arg)
 		*pc->op++ = IE_CAUSE;
 		*pc->op++ = 2;
 		*pc->op++ = 0x80;
-		*pc->op++ = 0x80 | 0x47;
+		*pc->op++ = 0x80 | 47;
 	}
 	SendMsg(pc, -1);
 	newl3state(pc, 0);
@@ -2305,7 +2307,7 @@ es ist nur erlaubt, im state 11 einen release zu schicken!
 dennoch verwende der stack den release scheinbar, um einen prozess
 zu releasen, wie es z.b. in l3dss1_disconnect_req_out geschieht.
 der process befindet sich zu diesem zeitpunk noch im state 7, 9 oder 25.
-wenn man den (Layer 4) state auf 11 ändern würde, braucht mann die folgende
+wenn man den (Layer 4) state auf 11 ï¿½ndern wï¿½rde, braucht mann die folgende
 zeile nicht: (bitte nachdenken, ob dies korrekt ist)
 
 karsten:
@@ -2313,7 +2315,7 @@ Nein glaube ich nicht. CC_RELEASE |= CC_RELEASE_CR muss aber mal ein paar Tests
 machen
 
 andreas:
-solltest du was ändern, bitte vorher mit mit sprechen, da bei mir alles soweit fabelhaft läuft un ich layer 4 eventuell anpassen muss.
+solltest du was ï¿½ndern, bitte vorher mit mit sprechen, da bei mir alles soweit fabelhaft lï¿½uft un ich layer 4 eventuell anpassen muss.
 */
 	| SBIT(12) | SBIT(7) | SBIT(9) | SBIT(25)
 	 ,CC_RELEASE | REQUEST, l3dss1_release_req},
@@ -2325,7 +2327,7 @@ karsten:
 muss ich auch testen, keine Zeit
 
 andreas:
-solltest du was ändern, bitte vorher mit mit sprechen, da bei mir alles soweit fabelhaft läuft un ich layer 4 eventuell anpassen muss.
+solltest du was ï¿½ndern, bitte vorher mit mit sprechen, da bei mir alles soweit fabelhaft lï¿½uft un ich layer 4 eventuell anpassen muss.
 */
 	{ALL_STATES,
 	 CC_FACILITY | REQUEST, l3dss1_facility_req},

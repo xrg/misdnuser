@@ -38,8 +38,6 @@ mISDN_new_layer(int fid, layer_info_t *l_info)
 	iframe_packed_t	*ifr = (iframe_t *)buf;
 	int		ret;
 
-	printf("buf=%p, ifr=%p\n", buf, ifr);
-
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, buf, 0, MGR_NEWLAYER | REQUEST,
 		0, sizeof(layer_info_t), l_info, TIMEOUT_1SEC);
@@ -66,7 +64,7 @@ mISDN_new_layer(int fid, layer_info_t *l_info)
 		memcpy(&l_info->clone, &ifr->data.uip + sizeof(l_info->id),
 		       sizeof(l_info->clone));
 	}
-
+//	fprintf(stderr, "%s: ret %x\n", __FUNCTION__, ret);
 	return(ret);
 }
 
@@ -149,7 +147,7 @@ mISDN_connect(int fid, interface_info_t *i_info)
 	int		ret;
 
 	set_wrrd_atomic(fid);
-	ret = mISDN_write_frame(fid, ALIGNED_TO_INT_BOUNDARY(buf), 0, MGR_CONNECT | REQUEST,
+	ret = mISDN_write_frame(fid, buf, 0, MGR_CONNECT | REQUEST,
 		0, sizeof(interface_info_t), i_info, TIMEOUT_1SEC);
 	if (ret) {
 		clear_wrrd_atomic(fid);
