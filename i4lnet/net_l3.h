@@ -53,7 +53,6 @@ struct _layer3 {
 	int		l2_state0;
 	int		next_cr;
 	int		debug;
-	L3Timer_t	timer;
 	net_stack_t	*nst;
 	layer3_proc_t	*proc;
 };
