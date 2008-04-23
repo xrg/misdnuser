@@ -1,8 +1,8 @@
 /*
 	Sample code to act as a userland dummy layer2
 	and communicate with Layer1
-	
-	(use layermask=3 to ensure your stack just 
+
+	(use layermask=3 to ensure your stack just
 	consists of Layer0+Layer1)
 */
 
@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include "mISDNlib.h"
 
-void usage(pname) 
+void usage(pname)
 char *pname;
 {
 	fprintf(stderr, "Call with %s [options]\n",pname);
@@ -27,7 +27,7 @@ char *pname;
 	fprintf(stderr, "\n     Valid options are:\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "  -?              Usage ; printout this information\n");
-	fprintf(stderr, "  -c<n>           use card number n (default 1)\n"); 
+	fprintf(stderr, "  -c<n>           use card number n (default 1)\n");
 	fprintf(stderr, "  -vn             Printing debug info level n\n");
 	fprintf(stderr, "\n");
 }
@@ -57,8 +57,8 @@ void sig_handler(int sig)
         	strerror(err));
 	exit(0);
 }
-                        
-                        
+
+
 void set_signals()
 {
         /* Set up the signal handler */
@@ -66,7 +66,7 @@ void set_signals()
         signal(SIGINT, sig_handler);
         signal(SIGTERM, sig_handler);
 }
- 
+
 #define TICKS_PER_SEC 1000000
 long get_tick_count(void)
 {
@@ -94,31 +94,31 @@ add_dlayer2(devinfo_t *di)
 	ret = mISDN_new_layer(di->device, &li);
 	if (ret<0)
 		return(12);
-	
+
 	di->layer2 = li.id;
-	
+
 	ret = mISDN_register_layer(di->device, di->d_stid, di->layer2);
         if (ret) {
                 fprintf(stdout, "register_layer ret(%d)\n", ret);
                 return(14);
-        }	
-        
+        }
+
         lid = mISDN_get_layerid(di->device, di->d_stid, 2);
 	if (lid<0) {
 		fprintf(stdout, "cannot get layer2 (%d)\n", lid);
 		return(15);
 	}
 	di->layer2 = lid;
-                                                     
+
 	if (!di->layer2)
 		return(13);
-	
+
 	return(0);
 }
 
 int do_setup(devinfo_t *di)
 {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 2048);
+	unsigned char buf[2048]  __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	int i, ret = 0;
 	stack_info_t *stinf;
@@ -177,17 +177,17 @@ int do_setup(devinfo_t *di)
 
 	// wait for PH_ACTIVATE | INDICATION or CONFIRM
 	t1 = get_tick_count();
-	while (1) { 
+	while (1) {
 
 		ret = mISDN_read(di->device, buf, 2048, 0);
-		
+
 		if (ret > 0) {
 			if ((frm->prim == (PH_ACTIVATE | CONFIRM)) ||
 			    (frm->prim == (PH_ACTIVATE | INDICATION))) {
 				fprintf(stdout, "layer1 activated (0x%x)\n", frm->prim);
 				return(0);
 			}
-			
+
 			/*
 			if (frm->prim == (MGR_SHORTSTATUS | INDICATION)) {
 				fprintf(stdout, "got MGR_SHORTSTATUS | INDICATION\n");
@@ -195,7 +195,7 @@ int do_setup(devinfo_t *di)
 			fprintf(stdout, "got (0x%x), still waiting for PH_ACTIVATE | CONFIRM/INDICATION...\n", frm->prim);
 			*/
 		}
-		
+
 		if ((get_tick_count() - t1)  > (TICKS_PER_SEC * 5)) {
 			fprintf(stdout, "unable to activate layer1 (TIMEOUT)\n");
 			return(6);
@@ -204,7 +204,7 @@ int do_setup(devinfo_t *di)
 
 	return(7);
 }
-	
+
 
 int printhexdata(FILE *f, int len, u_char *p)
 {
@@ -218,32 +218,32 @@ int printhexdata(FILE *f, int len, u_char *p)
 }
 
 
-                                
+
 
 void main_data_loop(devinfo_t *di)
 {
 	long t1;
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 2048);
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(tx_buf, 2048);
-		
+	unsigned char buf[2048]  __attribute__((aligned(4)));
+	unsigned char tx_buf[2048]  __attribute__((aligned(4)));
+
         iframe_t *frm = (iframe_t *)buf;
         int ret, i;
-        
+
         t1 = get_tick_count();
-	
+
         printf ("waiting for data (use CTRL-C to cancel)...\n");
         while (1)  {
         	/* read data */
         	ret = mISDN_read(di->device, buf, 2048, 0);
         	if (ret >= mISDN_HEADER_LEN) {
-        		
+
         		switch(frm->prim) {
         			case (PH_DATA | INDICATION) :
         				// layer1 gives rx frame
         				printf ("(PH_DATA | INDICATION) : \n\t");
 					printhexdata(stdout, frm->len, buf + mISDN_HEADER_LEN);
 					break;
-					
+
 				case (PH_DATA | CONFIRM) :
 					// layer1 confirmes tx frame
 					di->unconfirmed--;
@@ -254,7 +254,7 @@ void main_data_loop(devinfo_t *di)
 				}
         		}
         	}
-        	
+
         	/* write data */
         	if ((get_tick_count()-t1) > TICKS_PER_SEC) {
         		printf(".\n");
@@ -278,16 +278,16 @@ void main_data_loop(devinfo_t *di)
 			} else {
 				di->unconfirmed++;
 			}
-        		
+
         		t1 = get_tick_count();
         	}
 	}
 }
-        
+
 
 int main(argc,argv)
 int argc;
-char *argv[]; 
+char *argv[];
 {
 	int aidx=1;
 	char sw;
@@ -332,7 +332,7 @@ char *argv[];
 						exit(1);
 						break;
 				}
-			} 
+			}
                         aidx++;
 		} while (aidx<argc);
 	}
@@ -341,7 +341,7 @@ char *argv[];
 			strerror(errno));
 		return(1);
 	}
-	
+
 	set_signals();
 	err = do_setup(&mISDN);
 	if (err) {
@@ -355,6 +355,6 @@ char *argv[];
 	if (err)
 		fprintf(stdout,"mISDN_close: error(%d): %s\n", err,
 			strerror(err));
-	
+
 	return(0);
 }

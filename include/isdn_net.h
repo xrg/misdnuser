@@ -59,7 +59,7 @@ struct _bchannel {
 	unsigned char		cldsub[SUBADR_LEN];
 	int			cause_loc;
 	int			cause_val;
-	char			display[84];
+	unsigned char		display[84];
 	msg_t			*smsg;
 	ibuffer_t		*rbuf;
 	ibuffer_t		*sbuf;
@@ -101,6 +101,7 @@ struct _manager	{
 #define FEATURE_NET_PTP		0x00000002
 #define FEATURE_NET_CRLEN2	0x00000004
 #define FEATURE_NET_EXTCID	0x00000008
+#define FEATURE_NET_KEEPCALLS	0x00000010
 
 struct _net_stack {
 	int			device;
@@ -138,8 +139,8 @@ struct _nr_list {
 	nr_list_t		*prev;
 	nr_list_t		*next;
 	unsigned char		len;
-	char		nr[MSN_LEN];
-	char		name[64];
+	unsigned char		nr[MSN_LEN];
+	unsigned char		name[64];
 	int			typ;
 	int			flags;
 };

@@ -444,8 +444,8 @@ int main (int argc, char *argv[])
 		fprintf(stderr, "Option -v in combination with -d makes no sense.\n");
 		exit(1);
 	}
-	
-	if(!arg_dontenable)
+
+	if (!arg_dontenable)
 		kernel_debugtool_enable();
 
 #ifdef __BLACKFIN__

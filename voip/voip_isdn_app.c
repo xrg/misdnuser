@@ -59,7 +59,7 @@ alert_voip(iapplication_t *ap, bchannel_t *bc)
 	msg = make_msg_head(1024, MT_ALERTING);
 	if (msg) {
 		MsgAddIE(msg, IE_FACILITY, bc->fac, 1);
-		MsgAddIE(msg, IE_DISPLAY, (u_char *)bc->display, 1);
+		MsgAddIE(msg, IE_DISPLAY, bc->display, 1);
 		MsgAddIE(msg, IE_USER_USER, bc->uu, 1);
 		msg_queue_tail(&ap->con->aqueue, msg);
 		return(SendCtrl(ap));
@@ -77,7 +77,7 @@ facility_voip(iapplication_t *ap, bchannel_t *bc)
 	msg = make_msg_head(1024, MT_FACILITY);
 	if (msg) {
 		MsgAddIE(msg, IE_FACILITY, bc->fac, 1);
-		MsgAddIE(msg, IE_DISPLAY, (u_char *)bc->display, 1);
+		MsgAddIE(msg, IE_DISPLAY, bc->display, 1);
 		msg_queue_tail(&ap->con->aqueue, msg);
 		return(SendCtrl(ap));
 	}
@@ -120,7 +120,7 @@ connect_voip(iapplication_t *ap, bchannel_t *bc)
 	msg = make_msg_head(1024, MT_CONNECT);
 	if (msg) {
 		MsgAddIE(msg, IE_FACILITY, bc->fac, 1);
-		MsgAddIE(msg, IE_DISPLAY, (u_char *)bc->display, 1);
+		MsgAddIE(msg, IE_DISPLAY, bc->display, 1);
 		MsgAddIE(msg, IE_USER_USER, bc->uu, 1);
 		msg_queue_tail(&ap->con->aqueue, msg);
 		return(SendCtrl(ap));
@@ -143,7 +143,7 @@ disconnect_voip(iapplication_t *ap, bchannel_t *bc)
 		cause[2] = 0x80 | bc->cause_val;
 		MsgAddIE(msg, IE_CAUSE, cause, 0);
 		MsgAddIE(msg, IE_FACILITY, bc->fac, 1);
-		MsgAddIE(msg, IE_DISPLAY, (u_char *)bc->display, 1);
+		MsgAddIE(msg, IE_DISPLAY, bc->display, 1);
 		MsgAddIE(msg, IE_USER_USER, bc->uu, 1);
 		msg_queue_tail(&ap->con->aqueue, msg);
 		return(SendCtrl(ap));
@@ -166,7 +166,7 @@ release_voip(iapplication_t *ap, bchannel_t *bc)
 		cause[2] = 0x80 | bc->cause_val;
 		MsgAddIE(msg, IE_CAUSE, cause, 0);
 		MsgAddIE(msg, IE_FACILITY, bc->fac, 1);
-		MsgAddIE(msg, IE_DISPLAY, (u_char *)bc->display, 1);
+		MsgAddIE(msg, IE_DISPLAY, bc->display, 1);
 		MsgAddIE(msg, IE_USER_USER, bc->uu, 1);
 		msg_queue_tail(&ap->con->aqueue, msg);
 		return(SendCtrl(ap));
@@ -202,7 +202,7 @@ setup_voip_ocall(iapplication_t *ap, bchannel_t *bc) {
 	if (msg) {
 		MsgAddIE(msg, IE_FACILITY, bc->fac, 1);
 		MsgAddIE(msg, IE_BEARER, bc->bc, 0);
-		MsgAddIE(msg, IE_DISPLAY, (u_char *)bc->display, 1);
+		MsgAddIE(msg, IE_DISPLAY, bc->display, 1);
 		MsgAddIE(msg, IE_CALLING_PN, bc->msn, 0);
 		MsgAddIE(msg, IE_CALLING_SUB, bc->clisub, 1);
 		MsgAddIE(msg, IE_CALLED_PN, bc->nr, 0);

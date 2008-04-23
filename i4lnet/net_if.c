@@ -274,14 +274,14 @@ handle_timer(net_stack_t *nst, int id)
 int
 write_dmsg(net_stack_t *nst, msg_t *msg)
 {
-	iframe_packed_t	 *frm;
+	iframe_t	 *frm;
 	mISDNuser_head_t *hh;
 
 	hh = (mISDNuser_head_t *)msg->data;
 	dprint(DBGM_NET, nst->cardnr, "%s: msg(%p) len(%d) pr(%x) di(%x) q(%d)\n", __FUNCTION__,
 		msg, msg->len, hh->prim, hh->dinfo, nst->phd_down_msg?1:0);
 	msg_pull(msg, mISDNUSER_HEAD_SIZE);
-	frm = (iframe_packed_t *)msg_push(msg, mISDN_HEADER_LEN);
+	frm = (iframe_t *)msg_push(msg, mISDN_HEADER_LEN);
 	frm->prim = hh->prim;
 	frm->dinfo = hh->dinfo;
 	frm->addr = nst->l2_id | FLG_MSG_DOWN;
@@ -323,7 +323,7 @@ static int
 do_net_read(net_stack_t *nst)
 {
 	msg_t		*msg;
-	iframe_packed_t	*frm;
+	iframe_t	*frm;
 	int		ret;
 
 	msg = alloc_msg(MAX_MSG_SIZE);
@@ -343,7 +343,7 @@ do_net_read(net_stack_t *nst)
 		return(-EINVAL);
 	}
 	__msg_trim(msg, ret);
-	frm = (iframe_packed_t *)msg->data;
+	frm = (iframe_t *)msg->data;
 
 	dprint(DBGM_NET, nst->cardnr,"%s: prim(%x) addr(%x)\n", __FUNCTION__,
 		frm->prim, frm->addr);
@@ -385,7 +385,7 @@ do_readmsg(net_stack_t *nst, msg_t *msg)
 
 	if (!nst || !msg)
 		return(-EINVAL);
-	frm = (iframe_packed_t *)msg->data;
+	frm = (iframe_t *)msg->data;
 
 	dprint(DBGM_NET, nst->cardnr,"%s: prim(%x) addr(%x)\n", __FUNCTION__,
 		frm->prim, frm->addr);
@@ -522,13 +522,13 @@ cleanup_bc(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg)
 static int
 l1_request(net_stack_t *nst, mISDNuser_head_t *hh, msg_t *msg)
 {
-	iframe_packed_t	*frm;
+	iframe_t *frm;
 
 	hh = (mISDNuser_head_t *)msg->data;
 	dprint(DBGM_NET, nst->cardnr, "%s: msg(%p) len(%d) pr(%x) di(%x)\n", __FUNCTION__,
 		msg, msg->len, hh->prim, hh->dinfo);
 	msg_pull(msg, mISDNUSER_HEAD_SIZE);
-	frm = (iframe_packed_t *)msg_push(msg, mISDN_HEADER_LEN);
+	frm = (iframe_t *)msg_push(msg, mISDN_HEADER_LEN);
 	frm->prim = hh->prim;
 	frm->addr = hh->dinfo;
 	if (frm->prim == PH_DATA_REQ)

@@ -12,7 +12,7 @@
 #include "mISDNlib.h"
 #include "l3dss1.h"
 
-void usage(pname) 
+void usage(pname)
 char *pname;
 {
 	fprintf(stderr,"Call with %s [options] [filename]\n",pname);
@@ -24,13 +24,13 @@ char *pname;
 	fprintf(stderr,"\n     Valid options are:\n");
 	fprintf(stderr,"\n");
 	fprintf(stderr,"  -?              Usage ; printout this information\n");
-	fprintf(stderr,"  -c<n>           use card number n (default 1)\n"); 
-	fprintf(stderr,"  -F<n>           use function n (default 0)\n"); 
-	fprintf(stderr,"                    0 send and recive voice\n"); 
-	fprintf(stderr,"                    1 send touchtones\n"); 
-	fprintf(stderr,"                    2 recive touchtones\n"); 
-	fprintf(stderr,"                    3 send and recive hdlc data\n"); 
-	fprintf(stderr,"                    4 send and recive X75 data\n"); 
+	fprintf(stderr,"  -c<n>           use card number n (default 1)\n");
+	fprintf(stderr,"  -F<n>           use function n (default 0)\n");
+	fprintf(stderr,"                    0 send and recive voice\n");
+	fprintf(stderr,"                    1 send touchtones\n");
+	fprintf(stderr,"                    2 recive touchtones\n");
+	fprintf(stderr,"                    3 send and recive hdlc data\n");
+	fprintf(stderr,"                    4 send and recive X75 data\n");
 	fprintf(stderr,"                    5 send and recive voice early B connect\n");
 	fprintf(stderr,"  -n <phone nr>   Phonenumber to dial\n");
 	fprintf(stderr,"  -vn             Printing debug info level n\n");
@@ -92,10 +92,10 @@ char tt_char[]="0123456789ABCD*#";
 	*ptr++ = mty
 
 int play_msg(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, PLAY_SIZE+mISDN_HEADER_LEN);
+	unsigned char buf[PLAY_SIZE + mISDN_HEADER_LEN] __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	int len, ret;
-	
+
 	if (di->play<0)
 		return(0);
 	len = read(di->play, buf + mISDN_HEADER_LEN, PLAY_SIZE);
@@ -104,7 +104,7 @@ int play_msg(devinfo_t *di) {
 		close(di->play);
 		di->play = -1;
 	}
-	
+
 	frm->addr = di->b_adress[di->used_bchannel] | FLG_MSG_TARGET | FLG_MSG_DOWN;
 	frm->prim = PH_DATA | REQUEST;
 	frm->dinfo = 0;
@@ -118,11 +118,11 @@ int play_msg(devinfo_t *di) {
 }
 
 int send_data(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_DATA_BUF+mISDN_HEADER_LEN);
+	unsigned char buf[MAX_DATA_BUF + mISDN_HEADER_LEN]  __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	unsigned char *data;
 	int len, ret;
-	
+
 	if (di->play<0 || !di->fplay)
 		return(0);
 	if (!(data = (unsigned char *)fgets((char *)buf + mISDN_HEADER_LEN, MAX_DATA_BUF, di->fplay))) {
@@ -139,7 +139,7 @@ int send_data(devinfo_t *di) {
 		data[0] = 4; /* ctrl-D */
 		len = 1;
 	}
-	
+
 	frm->addr = di->b_adress[di->used_bchannel] | FLG_MSG_TARGET | FLG_MSG_DOWN;
 	frm->prim = PH_DATA | REQUEST;
 	frm->dinfo = 0;
@@ -198,7 +198,7 @@ int setup_bchannel(devinfo_t *di) {
 }
 
 int send_SETUP(devinfo_t *di, int SI, char *PNr) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char buf[1024]  __attribute__((aligned(4)));
 	unsigned char *np, *p, *msg;
 	int len, ret;
 
@@ -230,7 +230,7 @@ int send_SETUP(devinfo_t *di, int SI, char *PNr) {
 }
 
 int activate_bchan(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
+	unsigned char buf[128]  __attribute__((aligned(4)));
 	iframe_t *rfrm;
 	int ret;
 
@@ -239,7 +239,7 @@ int activate_bchan(devinfo_t *di) {
 		PH_ACTIVATE | REQUEST, 0, 0, NULL, TIMEOUT_1SEC);
 	if (VerifyOn>3)
 		fprintf(stdout,"PH_ACTIVATE write ret=%d\n", ret);
-	ret = mISDN_read(di->device, buf, 128, TIMEOUT_10SEC); 	
+	ret = mISDN_read(di->device, buf, 128, TIMEOUT_10SEC);
 	if (VerifyOn>3)
 		fprintf(stdout,"PH_ACTIVATE read ret=%d\n", ret);
 	rfrm = (iframe_t *)buf;
@@ -252,7 +252,7 @@ int activate_bchan(devinfo_t *di) {
 }
 
 int deactivate_bchan(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
+	unsigned char buf[128]  __attribute__((aligned(4)));
 	int ret;
 
 	ret = mISDN_write_frame(di->device, buf,
@@ -260,7 +260,7 @@ int deactivate_bchan(devinfo_t *di) {
 		DL_RELEASE | REQUEST, 0, 0, NULL, TIMEOUT_1SEC);
 	if (VerifyOn>3)
 		fprintf(stdout,"DL_RELEASE write ret=%d\n", ret);
-	ret = mISDN_read(di->device, buf, 128, TIMEOUT_10SEC); 	
+	ret = mISDN_read(di->device, buf, 128, TIMEOUT_10SEC);
 	if (VerifyOn>3)
 		fprintf(stdout,"DL_RELEASE read ret=%d\n", ret);
 	di->flag &= ~FLG_BCHANNEL_ACTIVE;
@@ -287,12 +287,12 @@ int send_touchtone(devinfo_t *di, int tone) {
 }
 
 int read_mutiplexer(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_REC_BUF);
-	unsigned char	*p, *msg;
-	iframe_t	*rfrm;
-	int		timeout = TIMEOUT_10SEC;
-	int		ret = 0;
-	int		len;
+	unsigned char buf[MAX_REC_BUF]  __attribute__((aligned(4)));
+	unsigned char *p, *msg;
+	iframe_t      *rfrm;
+	int	      timeout = TIMEOUT_10SEC;
+	int	      ret = 0;
+	int	      len;
 
 	rfrm = (iframe_t *)buf;
 	/* Main loop */
@@ -333,7 +333,7 @@ start_again:
 						fprintf(stdout,"unknown PH_CONTROL len %d/val %x\n",
 							rfrm->len, rfrm->data.i);
 				}
-			/* D-Channel related messages */  
+			/* D-Channel related messages */
 			} else if ((ret > 19) && (buf[19] == MT_CONNECT) &&
 				(di->flag & FLG_CALL_ORGINATE)) {
 				/* We got connect, so bring B-channel up */
@@ -458,7 +458,7 @@ start_again:
 }
 
 int do_connection(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char buf[1024]  __attribute__((aligned(4)));
 	unsigned char *p, *msg;
 	iframe_t *rfrm;
 	int len, idx, ret = 0;
@@ -606,14 +606,14 @@ add_dlayer3(devinfo_t *di, int prot)
 	di->layer3 = li.id;
 	if (!di->layer3)
 		return(13);
-	
+
 #ifdef OBSOLETE
-	/* 
+	/*
 	 * EXT_IF_CREATE | EXT_IF_EXCLUSIV sorgen dafuer, das wenn die L3
 	 * Schnittstelle schon benutzt ist, eine neue L2 Instanz erzeugt
 	 * wird
 	 */
-   	
+
 	ii.extentions = EXT_IF_CREATE | EXT_IF_EXCLUSIV;
 	ii.owner = di->layer3;
 	ii.peer = di->layer2;
@@ -637,7 +637,7 @@ add_dlayer3(devinfo_t *di, int prot)
 }
 
 int do_setup(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char buf[1024]  __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	int i, ret = 0;
 	stack_info_t *stinf;
@@ -854,7 +854,7 @@ char *argv[];
 		printf("TestmISDN cannot open %s due to %s\n",FileNameOut,
 			strerror(errno));
 		mISDN.play = -1;
-	} else 
+	} else
 		mISDN.fplay = fdopen(mISDN.play, "r");
 	if (VerifyOn>8)
 		fprintf(stdout,"fileno %d/%d/%d\n",mISDN.save, mISDN.play,
@@ -863,7 +863,7 @@ char *argv[];
 	if (err)
 		fprintf(stdout,"do_setup error %d\n", err);
 	else
-		do_connection(&mISDN);	
+		do_connection(&mISDN);
 	close(mISDN.save);
 	if (mISDN.play>=0)
 		close(mISDN.play);
@@ -871,6 +871,6 @@ char *argv[];
 	if (err)
 		fprintf(stdout,"mISDN_close: error(%d): %s\n", err,
 			strerror(err));
-	
+
 	return(0);
 }

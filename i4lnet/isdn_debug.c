@@ -91,8 +91,9 @@ dprint(unsigned int mask, int port, const char *fmt, ...)
 	int	ret = 0;
 	va_list	args;
 	time_t tm = time(NULL);
-	char *tmp=ctime(&tm),*p;
-	
+	char time_buf[26];
+	char *tmp = ctime_r(&tm, time_buf), *p;
+
 	p=strchr(tmp,'\n');
 	if (p) *p=':';
 

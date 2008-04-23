@@ -34,9 +34,9 @@ mISDN_get_layerid(int fid, int stack, int layer)
 int
 mISDN_new_layer(int fid, layer_info_t *l_info)
 {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, sizeof(layer_info_t) + mISDN_HEADER_LEN);
-	iframe_packed_t	*ifr = (iframe_t *)buf;
-	int		ret;
+	unsigned char buf[sizeof(layer_info_t) + mISDN_HEADER_LEN] __attribute__((aligned(4)));
+	iframe_t      *ifr = (iframe_t *)buf;
+	int	      ret;
 
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, buf, 0, MGR_NEWLAYER | REQUEST,
@@ -60,8 +60,8 @@ mISDN_new_layer(int fid, layer_info_t *l_info)
 	} else {
 		ret = 0;
 
-		memcpy(&l_info->id, &ifr->data.uip, sizeof(l_info->id));
-		memcpy(&l_info->clone, &ifr->data.uip + sizeof(l_info->id),
+		memcpy(&l_info->id, &ifr->data.ui, sizeof(l_info->id));
+		memcpy(&l_info->clone, &ifr->data.ui + sizeof(l_info->id),
 		       sizeof(l_info->clone));
 	}
 //	fprintf(stderr, "%s: ret %x\n", __FUNCTION__, ret);
@@ -208,9 +208,9 @@ mISDNprint_layer_info(FILE *file, layer_info_t *l_info)
 int
 mISDN_get_interface_info(int fid, interface_info_t *i_info)
 {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, sizeof(interface_info_t) + mISDN_HEADER_LEN);
-	iframe_packed_t	*ifr = (iframe_t *)buf;
-	int		ret;
+	unsigned char buf[sizeof(interface_info_t) + mISDN_HEADER_LEN] __attribute__((aligned(4)));
+	iframe_t      *ifr = (iframe_t *)buf;
+	int	      ret;
 
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, ifr, i_info->owner, MGR_GETIF | REQUEST,

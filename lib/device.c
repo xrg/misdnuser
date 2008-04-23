@@ -79,7 +79,6 @@ mISDN_open(void)
 	dev->fid = fid;
 	dev->isize = mISDN_INBUFFER_SIZE;
 	dev->inbuf = malloc(dev->isize);
-	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(dev->inbuf);
 	if (!dev->inbuf) {
 		free(dev);
 		close(fid);
@@ -156,7 +155,7 @@ mISDN_close(int fid)
  */
 
 static int
-mISDN_remove_iframe(mISDNdev_t *dev, iframe_packed_t *frm)
+mISDN_remove_iframe(mISDNdev_t *dev, iframe_t *frm)
 {
 	u_char	*ep;
 	int	len;
@@ -182,14 +181,11 @@ mISDN_read(int fid, void *buf, size_t count, int utimeout) {
 	mISDNdev_t	*dev;
 	int		ret = 0, len, sel;
 	fd_set		in;
-	iframe_packed_t	*ifr;
+	iframe_t	*ifr;
 	struct timeval	tout;
 #ifdef MUTEX_TIMELOCK
 	struct timespec	ts;
 #endif
-
-	//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
-
 	pthread_mutex_lock(&devlist_lock);
 	dev = devlist;
 	while(dev) {
@@ -255,7 +251,6 @@ mISDN_read(int fid, void *buf, size_t count, int utimeout) {
 	len = dev->iend - dev->irp;
 	if (!len) {
 		dev->irp = dev->iend = dev->inbuf;
-//		CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(dev->irp);
 		pthread_mutex_unlock(&dev->rmutex);
 		FD_ZERO(&in);
 		FD_SET(fid, &in);
@@ -316,14 +311,7 @@ mISDN_read(int fid, void *buf, size_t count, int utimeout) {
 		goto out;
 	}
 
-	/*
-	 * we are using iframe_packed_t * here because dev->irp can be
-	 * unaligned.  In a minute we memcpy the thing into buf, which must be
-	 * int aligned (it is checked for earlier), so the problem goes away
-	 * for the caller.  But right now we must only access it bytewise
-	 */
-
-	ifr = (iframe_packed_t *)dev->irp;
+	ifr = (iframe_t *)dev->irp;
 
 	if (ifr->len > 0) {
 		if ((ifr->len + mISDN_HEADER_LEN) > len) {
@@ -345,9 +333,6 @@ mISDN_read(int fid, void *buf, size_t count, int utimeout) {
 
 	ret = len;
 out:
-//	if(ret >=0)
-//		Dump(buf, ret);
-
 	pthread_mutex_unlock(&dev->rmutex);
 	return(ret);
 }
@@ -356,9 +341,9 @@ out:
  * care - returns an UNALIGNED iframe_t *
  */
 
-static iframe_packed_t *
+static iframe_t *
 mISDN_find_iframe(mISDNdev_t *dev, u_int addr, u_int prim) {
-	iframe_packed_t	*frm;
+	iframe_t	*frm;
 	u_char		*rp;
 
 	rp = dev->irp;
@@ -366,7 +351,7 @@ mISDN_find_iframe(mISDNdev_t *dev, u_int addr, u_int prim) {
 		if ((dev->iend - rp) < mISDN_HEADER_LEN) {
 			return(NULL);
 		}
-		frm = (iframe_packed_t *)rp;
+		frm = (iframe_t *)rp;
 		if ((frm->addr == addr) && (frm->prim == prim))
 			return(frm);
 		if (frm->len > 0)
@@ -385,12 +370,11 @@ mISDN_read_frame(int fid, void *buf, size_t count, u_int addr, u_int msgtype,
 	mISDNdev_t	*dev;
 	int		len, sel, first, ret = 0;
 	fd_set		in;
-	iframe_packed_t	*ifr;
+	iframe_t	*ifr;
 	struct timeval	tout;
 #ifdef MUTEX_TIMELOCK
 	struct timespec	ts;
 #endif
-	//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(buf);
 
 	pthread_mutex_lock(&devlist_lock);
 	dev = devlist;
@@ -512,8 +496,6 @@ mISDN_read_frame(int fid, void *buf, size_t count, u_int addr, u_int msgtype,
 		first = 0;
 	}
 out:
-//	if(ret >=0)
-//		Dump(buf, ret);
 	pthread_mutex_unlock(&dev->rmutex);
 	return(ret);
 }
@@ -603,9 +585,9 @@ int
 mISDN_write_frame(int fid, void *fbuf, u_int addr, u_int msgtype,
 		int dinfo, int dlen, void *dbuf, int utimeout)
 {
-	iframe_packed_t  *ifr = fbuf;
-	int		 len = mISDN_HEADER_LEN;
-	int		 ret;
+	iframe_t *ifr = fbuf;
+	int	  len = mISDN_HEADER_LEN;
+	int	  ret;
 
 	if (!fbuf) {
 		errno = EINVAL;

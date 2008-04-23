@@ -12,6 +12,18 @@
 
 #include <signal.h>
 
+#if defined(__arm__) || defined(__BLACKFIN__)
+#define ALIGNED_TO_INT_BOUNDARY(x) ((x) + ((sizeof(int)-((long)(x) & (sizeof(int)-1))) & (sizeof(int)-1)))
+#define CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(x) if ((int)(x)&(sizeof(int)-1)) { fprintf(stderr, "%s %d: %s() %s (%p) not on int alignment\n",  __FILE__, __LINE__, __FUNCTION__, #x, x); return -1; }
+#define CONFIRM_ALIGN(x) if ((int)(x)&(sizeof(int)-1)) { fprintf(stderr, "%s %d: %s() %s (%p) not on int alignment\n", __FILE__, __LINE__, __FUNCTION__, #x, x); }
+#else
+#define ALIGNED_TO_INT_BOUNDARY(x) (x)
+#define CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(x)
+#define CONFIRM_ALIGN(x)
+#define DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(name, size) unsigned char name[size];
+#endif
+
+
 volatile int ctrl_c_seen = 0;
 
 void
@@ -95,8 +107,7 @@ static char tt_char[] = "0123456789ABCD*#";
 	*ptr++ = mty
 
 int play_msg(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf,
-	    PLAY_SIZE + mISDN_HEADER_LEN);
+	unsigned char buf[PLAY_SIZE + mISDN_HEADER_LEN] __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	int len, ret;
 
@@ -125,7 +136,7 @@ int play_msg(devinfo_t *di) {
 }
 
 int send_data(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_DATA_BUF);
+	unsigned char buf[MAX_DATA_BUF]  __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	char *data;
 	int len, ret;
@@ -240,7 +251,7 @@ int setup_bchannel(devinfo_t *di) {
 }
 
 int send_SETUP(devinfo_t *di, int SI, char *PNr) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char buf[1024]  __attribute__((aligned(4)));
 	char  *msg;
 	char *np, *p;
 	int len, ret;
@@ -278,7 +289,7 @@ int send_SETUP(devinfo_t *di, int SI, char *PNr) {
 }
 
 int activate_bchan(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
+	unsigned char buf[128]  __attribute__((aligned(4)));
 	iframe_t *rfrm;
 	int ret;
 
@@ -300,7 +311,7 @@ int activate_bchan(devinfo_t *di) {
 }
 
 int deactivate_bchan(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 128);
+	unsigned char buf[128]  __attribute__((aligned(4)));
 	int ret;
 
 	ret = mISDN_write_frame(di->device, buf,
@@ -335,7 +346,7 @@ int send_touchtone(devinfo_t *di, int tone) {
 }
 
 int read_mutiplexer(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, MAX_REC_BUF);
+	unsigned char buf[MAX_REC_BUF]  __attribute__((aligned(4)));
 	unsigned char	*p, *msg;
 	iframe_t	*rfrm;
 	int		timeout = TIMEOUT_10SEC;
@@ -587,7 +598,7 @@ start_again:
 
 
 int do_connection(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char buf[1024]  __attribute__((aligned(4)));
 	unsigned char *p, *msg;
 	iframe_t *rfrm;
 	int len, idx, ret = 0;
@@ -829,7 +840,7 @@ add_dlayer3(devinfo_t *di, int prot)
 }
 
 int do_setup(devinfo_t *di) {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, 1024);
+	unsigned char buf[1024]  __attribute__((aligned(4)));
 	iframe_t *frm = (iframe_t *)buf;
 	int i, ret = 0;
 	stack_info_t *stinf;

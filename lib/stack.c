@@ -265,11 +265,9 @@ mISDN_get_stack_count(int fid)
 int
 mISDN_new_stack(int fid, stack_info_t *s_info)
 {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, sizeof(stack_info_t) + mISDN_HEADER_LEN);
-	iframe_t	ifr;
-	int		ret;
-
-	//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(s_info);
+	unsigned char buf[sizeof(stack_info_t) + mISDN_HEADER_LEN] __attribute__((aligned(4)));
+	iframe_t      ifr;
+	int	      ret;
 
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, buf, 0, MGR_NEWSTACK | REQUEST,
@@ -293,9 +291,9 @@ mISDN_new_stack(int fid, stack_info_t *s_info)
 int
 mISDN_set_stack(int fid, int stack, mISDN_pid_t *pid)
 {
-	DECLARE_UC_ARRAY_INT_ALIGNED_IF_ARCH_NEEDS(buf, sizeof(mISDN_pid_t) + mISDN_HEADER_LEN);
-	iframe_t	ifr;
-	int		ret;
+	unsigned char buf[sizeof(mISDN_pid_t) + mISDN_HEADER_LEN] __attribute__((aligned(4)));
+	iframe_t      ifr;
+	int	      ret;
 
 	set_wrrd_atomic(fid);
 	ret = mISDN_write_frame(fid, buf, stack, MGR_SETSTACK | REQUEST,
@@ -343,8 +341,6 @@ mISDN_get_stack_info(int fid, int stack, void *info, size_t max_len)
 	iframe_t	ifr;
 	int		ret;
 
-	//	CONFIRM_ALIGN_RETURN_MINUS_1_ON_MISALIGN(info);
-
 	set_wrrd_atomic(fid);
 
 	ret = mISDN_write_frame(fid, &ifr, stack, MGR_GETSTACK | REQUEST,
@@ -357,7 +353,7 @@ mISDN_get_stack_info(int fid, int stack, void *info, size_t max_len)
 		stack, MGR_GETSTACK | CONFIRM, TIMEOUT_1SEC);
 	clear_wrrd_atomic(fid);
 	if (ret == mISDN_HEADER_LEN)
-		memcpy(&ret, &(((iframe_packed_t *)info)->len), sizeof(ret));
+		memcpy(&ret, &(((iframe_t *)info)->len), sizeof(ret));
 	return(ret);
 }
 
