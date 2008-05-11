@@ -1,0 +1,9 @@
+*.[o.a]
+*.la
+lib*.so
+bridge/isdnbridge
+example/cleanl2
+example/loghex
+example/misdnportinfo
+example/testcon
+example/testlayer3
