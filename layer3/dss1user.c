@@ -206,7 +206,7 @@ ie_in_set(l3_process_t *pc, u_char ie, int *checklist) {
 }
 
 static int
-check_infoelements(l3_process_t *pc, struct l3_msg *l3m, int *checklist)
+check_infoelements(l3_process_t *pc, struct l3_msg *l3m, int *checklist, int mt)
 {
 	unsigned char	**v_ie, ie;
 	int		i, l, pos;
@@ -218,6 +218,7 @@ check_infoelements(l3_process_t *pc, struct l3_msg *l3m, int *checklist)
 		if (v_ie[i]) {
 			ie = l3_pos2ie(i);
 			if (!(pos = ie_in_set(pc, ie, checklist))) {
+				eprint("Received IE %x not allowed (mt=%x)\n", mt);
 				err_ureg++;
 			}
 			l = *v_ie[i];
@@ -588,7 +589,7 @@ l3dss1_alerting(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_ALERTING);
+	ret = check_infoelements(pc, l3m, ie_ALERTING, MT_ALERTING);
 	if (Q931_ERROR_COMPREH  == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -629,7 +630,7 @@ l3dss1_call_proc(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		return;
 	}
 	/* Now we are on none mandatory IEs */
-	ret = check_infoelements(pc, l3m, ie_CALL_PROCEEDING);
+	ret = check_infoelements(pc, l3m, ie_CALL_PROCEEDING, MT_CALL_PROCEEDING);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -670,7 +671,7 @@ l3dss1_connect(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_CONNECT);
+	ret = check_infoelements(pc, l3m, ie_CONNECT, MT_CONNECT);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -693,7 +694,7 @@ l3dss1_connect_ack(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 {
 	int		ret;
 
-	ret = check_infoelements(pc, l3m, ie_CONNECT_ACKNOWLEDGE);
+	ret = check_infoelements(pc, l3m, ie_CONNECT_ACKNOWLEDGE, MT_CONNECT_ACKNOWLEDGE);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -721,7 +722,7 @@ l3dss1_disconnect(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 	}
 	else if (pc->state == 7) /* Call Received*/
 		cause = pc->rm_cause;
-	ret = check_infoelements(pc, l3m, ie_DISCONNECT);
+	ret = check_infoelements(pc, l3m, ie_DISCONNECT, MT_DISCONNECT);
 	if (Q931_ERROR_COMPREH == ret)
 		cause = CAUSE_MANDATORY_IE_MISS;
 	else if ((!cause) && (Q931_ERROR_UNKNOWN == ret))
@@ -768,7 +769,7 @@ l3dss1_setup_ack(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		return;
 	}
 	/* Now we are on none mandatory IEs */
-	ret = check_infoelements(pc, l3m, ie_SETUP_ACKNOWLEDGE);
+	ret = check_infoelements(pc, l3m, ie_SETUP_ACKNOWLEDGE, MT_SETUP_ACKNOWLEDGE);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -830,7 +831,7 @@ l3dss1_setup(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		return;
 	}
 	/* Now we are on none mandatory IEs */
-	err = check_infoelements(pc, l3m, ie_SETUP);
+	err = check_infoelements(pc, l3m, ie_SETUP, MT_SETUP);
 	if (Q931_ERROR_COMPREH == err) {
 		l3dss1_msg_without_setup(pc, CAUSE_MANDATORY_IE_MISS);
 		free_l3_msg(l3m);
@@ -864,7 +865,7 @@ l3dss1_release(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		else if (ret != -1)
 			cause = CAUSE_INVALID_CONTENTS;
 	}
-	ret = check_infoelements(pc, l3m, ie_RELEASE);
+	ret = check_infoelements(pc, l3m, ie_RELEASE, MT_RELEASE);
 	if (Q931_ERROR_COMPREH == ret)
 		cause = CAUSE_MANDATORY_IE_MISS;
 	else if ((Q931_ERROR_UNKNOWN == ret) && (!cause))
@@ -922,7 +923,7 @@ l3dss1_progress(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m) {
 		return;
 	}
 	/* Now we are on none mandatory IEs */
-	err = check_infoelements(pc, l3m, ie_PROGRESS);
+	err = check_infoelements(pc, l3m, ie_PROGRESS, MT_PROGRESS);
 	if (err)
 		l3dss1_std_ie_err(pc, err);
 	/* 
@@ -972,7 +973,7 @@ l3dss1_notify(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m) {
 		return;
 	}
 	/* Now we are on none mandatory IEs */
-	err = check_infoelements(pc, l3m, ie_NOTIFY);
+	err = check_infoelements(pc, l3m, ie_NOTIFY, MT_NOTIFY);
 	if (err)
 		l3dss1_std_ie_err(pc, err);
 	if (Q931_ERROR_COMPREH != err) {
@@ -985,7 +986,7 @@ static void
 l3dss1_status_enq(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m) {
 	int		ret;
 
-	ret = check_infoelements(pc, l3m, ie_STATUS_ENQUIRY);
+	ret = check_infoelements(pc, l3m, ie_STATUS_ENQUIRY, MT_STATUS_ENQUIRY);
 	l3dss1_std_ie_err(pc, ret);
 	l3dss1_status_send(pc, CAUSE_STATUS_RESPONSE);
 	mISDN_l3up(pc, MT_STATUS_ENQUIRY, l3m);
@@ -995,7 +996,7 @@ static void
 l3dss1_information(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m) {
 	int		ret;
 
-	ret = check_infoelements(pc, l3m, ie_INFORMATION);
+	ret = check_infoelements(pc, l3m, ie_INFORMATION, MT_INFORMATION);
 	if (ret)
 		l3dss1_std_ie_err(pc, ret);
 	if (pc->state == 25) { /* overlap receiving */
@@ -1062,7 +1063,7 @@ l3dss1_status(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m) {
 	} else
 		cause = CAUSE_MANDATORY_IE_MISS;
 	if (!cause) { /*  no error before */
-		ret = check_infoelements(pc, l3m, ie_STATUS);
+		ret = check_infoelements(pc, l3m, ie_STATUS, MT_STATUS);
 		if (Q931_ERROR_COMPREH == ret)
 			cause = CAUSE_MANDATORY_IE_MISS;
 		else if (Q931_ERROR_UNKNOWN == ret)
@@ -1094,7 +1095,7 @@ l3dss1_facility(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 {
 	int		ret;
 
-	ret = check_infoelements(pc, l3m, ie_FACILITY);
+	ret = check_infoelements(pc, l3m, ie_FACILITY, MT_FACILITY);
 	l3dss1_std_ie_err(pc, ret);
 	if (!l3m->facility) {
 		free_l3_msg(l3m);
@@ -1110,7 +1111,7 @@ l3dss1_suspend_ack(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m) {
 	L3DelTimer(&pc->timer1);
 	newl3state(pc, 0);
 	/* We don't handle suspend_ack for IE errors now */
-	ret = check_infoelements(pc, l3m, ie_SUSPEND_ACKNOWLEDGE);
+	ret = check_infoelements(pc, l3m, ie_SUSPEND_ACKNOWLEDGE, MT_SUSPEND_ACKNOWLEDGE);
 	mISDN_l3up(pc, MT_SUSPEND_ACKNOWLEDGE, l3m);
 	release_l3_process(pc);
 }
@@ -1130,7 +1131,7 @@ l3dss1_suspend_rej(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_SUSPEND_REJECT);
+	ret = check_infoelements(pc, l3m, ie_SUSPEND_REJECT, MT_SUSPEND_REJECT);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1166,7 +1167,7 @@ l3dss1_resume_ack(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_RESUME_ACKNOWLEDGE);
+	ret = check_infoelements(pc, l3m, ie_RESUME_ACKNOWLEDGE, MT_RESUME_ACKNOWLEDGE);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1194,7 +1195,7 @@ l3dss1_resume_rej(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_RESUME_REJECT);
+	ret = check_infoelements(pc, l3m, ie_RESUME_REJECT, MT_RESUME_REJECT);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1335,7 +1336,7 @@ l3dss1_hold_ind(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 {
 	int	ret;
 
-	ret = check_infoelements(pc, l3m, ie_HOLD);
+	ret = check_infoelements(pc, l3m, ie_HOLD, MT_HOLD);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1385,7 +1386,7 @@ l3dss1_hold_rej(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_HOLD_REJECT);
+	ret = check_infoelements(pc, l3m, ie_HOLD_REJECT, MT_HOLD_REJECT);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1421,7 +1422,7 @@ l3dss1_hold_ack(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 {
 	int	ret;
 
-	ret = check_infoelements(pc, l3m, ie_HOLD_ACKNOWLEDGE);
+	ret = check_infoelements(pc, l3m, ie_HOLD_ACKNOWLEDGE, MT_HOLD_ACKNOWLEDGE);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1528,7 +1529,7 @@ l3dss1_retrieve_ind(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 			return;
 		}
 	}
-	ret = check_infoelements(pc, l3m, ie_RETRIEVE);
+	ret = check_infoelements(pc, l3m, ie_RETRIEVE, MT_RETRIEVE);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1560,7 +1561,7 @@ l3dss1_retrieve_ack(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 {
 	int	ret;
 
-	ret = check_infoelements(pc, l3m, ie_RETRIEVE_ACKNOWLEDGE);
+	ret = check_infoelements(pc, l3m, ie_RETRIEVE_ACKNOWLEDGE, MT_RETRIEVE_ACKNOWLEDGE);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
@@ -1600,7 +1601,7 @@ l3dss1_retrieve_rej(l3_process_t *pc, unsigned int pr, struct l3_msg *l3m)
 		free_l3_msg(l3m);
 		return;
 	}
-	ret = check_infoelements(pc, l3m, ie_RETRIEVE_REJECT);
+	ret = check_infoelements(pc, l3m, ie_RETRIEVE_REJECT, MT_RETRIEVE_REJECT);
 	if (Q931_ERROR_COMPREH == ret) {
 		l3dss1_std_ie_err(pc, ret);
 		free_l3_msg(l3m);
