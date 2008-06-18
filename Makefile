@@ -1,7 +1,7 @@
 
 MAJOR=1
 MINOR=1
-SUBMINOR=7_2
+SUBMINOR=8
 
 #
 # Set this to your local copy of mISDN
