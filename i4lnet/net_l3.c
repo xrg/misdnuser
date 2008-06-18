@@ -636,6 +636,35 @@ l3dss1_facility(layer3_proc_t *pc, int pr, void *arg)
 }
 
 static void
+l3dss1_restart(layer3_proc_t *pc, int pr, void *arg)
+{
+	msg_t		*umsg,*msg = arg;
+	RESTART_t *restart;
+
+	umsg = prep_l3data_msg(CC_RESTART | INDICATION, 
+	pc->callref>0?pc->ces | (pc->callref << 16):-1, 
+	sizeof(RESTART_t), msg->len, NULL);
+	if (!umsg)
+		return;
+	restart = (RESTART_t *)(umsg->data + mISDNUSER_HEAD_SIZE);
+	restart->RESTART_IND =
+		find_and_copy_ie(msg->data, msg->len, IE_RESTART_IND, 0, umsg);
+
+	if (mISDN_l3up(pc, umsg))
+		free_msg(umsg);
+
+	MsgStart(pc, MT_RESTART_ACKNOWLEDGE);
+	*pc->op++ = IE_RESTART_IND;
+
+	char l=*restart->RESTART_IND;
+	*pc->op++ = l;
+	memcpy(pc->op, &restart->RESTART_IND[1], l);
+	pc->op += l;
+
+	SendMsg(pc, -1); 
+}
+
+static void
 l3dss1_userinfo(layer3_proc_t *pc, int pr, void *arg)
 {
 	msg_t			*umsg,*msg = arg;
@@ -2573,7 +2602,7 @@ send_proc(layer3_proc_t *proc, int op, void *arg)
 		case IMSG_RELEASE_CHILDS:
 			{
 				RELEASE_t	*rel;
-				unsigned char		cause[3];
+				char		cause[3];
 
 				cause[0] = 2;
 				cause[1] = CAUSE_LOC_PNET_LOCUSER | 0x80;
@@ -2660,6 +2689,15 @@ dl_data_mux(layer3_t *l3, mISDNuser_head_t *hh, msg_t *msg)
 		if (l3->debug & L3_DEB_STATE)
 			l3_debug(l3, "dss1 Global CallRef");
 //		global_handler(l3, l3m.mt, msg);
+
+		if (l3m.mt == MT_RESTART)  {
+			layer3_proc_t dummy;
+			memset( &dummy, 0, sizeof(layer3_proc_t));
+			dummy.l3 = l3;
+			dummy.ces = 0;
+			dummy.callref = 0;
+			l3dss1_restart(&dummy, hh->prim, msg);
+		}
 		free_msg(msg);
 		return(0);
 	}

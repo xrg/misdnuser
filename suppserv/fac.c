@@ -96,6 +96,7 @@ int encodeFac (__u8 *dest, struct FacParm *fac)
 	case Fac_Suspend:
 	case Fac_Resume:
 	case Fac_RESULT:
+	case Fac_ERROR:
 	break;
 	case Fac_CFActivate:
 		len = encodeFacActivationDiversion(dest, &(fac->u.CFActivate));
