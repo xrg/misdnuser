@@ -600,11 +600,14 @@ create_l2l3if(layer3_t *l3, struct sockaddr_mISDN *addr)
 {
 	struct l2l3if	*l2i;
 
-	if (l3->l2master.l2addr.tei == addr->tei)
+	if (l3->l2master.l2addr.tei == addr->tei &&
+			!(test_bit(FLG_USER, &l3->ml3.options) && !test_bit(MISDN_FLG_PTP, &l3->ml3.options)))
 		l2i = &l3->l2master;
 	else
 		l2i = get_l2if(l3, addr->channel);
 	if (l2i) {
+		if (l2i->l2addr.tei != 127)
+			eprint("overwrite tei %d with tei %d\n", l2i->l2addr.tei, addr->tei);
 		dprint(DBGM_L3, l2i->l2addr.dev, "%s: already have layer2/3 interface for ces(%x) tei(%x/%x)\n",
 			__FUNCTION__, addr->channel, addr->tei, l2i->l2addr.tei);
 		l2i->l2addr = *addr;
@@ -743,6 +746,20 @@ to_l2(layer3_t *l3, struct l3_msg *l3m)
 {
 	struct l2l3if	*l2i;
 
+	/* given tei or 0=first tei, but not 127 */
+	if (l3m->pid == l3->l2master.l2addr.tei
+	 || (l3m->pid == 0 && l3->l2master.l2addr.tei != 127)) {
+		switch(l3m->type) {
+		case MT_L2ESTABLISH:
+			FsmEvent(&l3->l2master.l3m, EV_ESTABLISH_REQ, NULL);
+			break;
+		case MT_L2RELEASE:
+			FsmEvent(&l3->l2master.l3m, EV_RELEASE_REQ, NULL);
+			break;
+		}
+		free_l3_msg(l3m);
+		return;
+	}
 	list_for_each_entry(l2i, &l3->l2master.list, list) {
 		/* given tei or 0=first tei, but not 127 */
 		if (l3m->pid == l2i->l2addr.tei
