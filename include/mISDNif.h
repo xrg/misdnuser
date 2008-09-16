@@ -80,6 +80,7 @@
 #define PH_DEACTIVATE_IND	0x0202
 #define PH_DEACTIVATE_CNF	0x4202
 #define PH_DATA_IND		0x2002
+#define PH_DATA_E_IND		0x3002
 #define MPH_ACTIVATE_IND	0x0502
 #define MPH_DEACTIVATE_IND	0x0602
 #define MPH_INFORMATION_IND	0x0702
@@ -199,6 +200,18 @@
 #define ISDN_P_NT_S0  		0x02
 #define ISDN_P_TE_E1		0x03
 #define ISDN_P_NT_E1  		0x04
+#define ISDN_P_TE_UP0		0x05
+#define ISDN_P_NT_UP0		0x06
+
+#define IS_ISDN_P_TE(p) ((p == ISDN_P_TE_S0) || (p == ISDN_P_TE_E1) || \
+				(p == ISDN_P_TE_UP0) || (p == ISDN_P_LAPD_TE))
+#define IS_ISDN_P_NT(p) ((p == ISDN_P_NT_S0) || (p == ISDN_P_NT_E1) || \
+				(p == ISDN_P_NT_UP0) || (p == ISDN_P_LAPD_NT))
+#define IS_ISDN_P_S0(p) ((p == ISDN_P_TE_S0) || (p == ISDN_P_NT_S0))
+#define IS_ISDN_P_E1(p) ((p == ISDN_P_TE_E1) || (p == ISDN_P_NT_E1))
+#define IS_ISDN_P_UP0(p) ((p == ISDN_P_TE_UP0) || (p == ISDN_P_NT_UP0))
+
+
 #define ISDN_P_LAPD_TE		0x10
 #define	ISDN_P_LAPD_NT		0x11
 
@@ -320,6 +333,8 @@ clear_channelmap(u_int nr, u_char *map)
 #define MISDN_CTRL_SETPEER		0x0040
 #define MISDN_CTRL_UNSETPEER		0x0080
 #define MISDN_CTRL_RX_OFF		0x0100
+#define MISDN_CTRL_FILL_EMPTY		0x0200
+#define MISDN_CTRL_GETPEER		0x0400
 #define MISDN_CTRL_HW_FEATURES_OP	0x2000
 #define MISDN_CTRL_HW_FEATURES		0x2001
 #define MISDN_CTRL_HFC_OP		0x4000

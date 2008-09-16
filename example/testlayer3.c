@@ -1,3 +1,26 @@
+/*
+ *
+ * Copyright 2008 Karsten Keil <kkeil@suse.de>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59
+ * Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * The full GNU General Public License is included in this distribution in the
+ * file called LICENSE.
+ *
+ */
+
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -30,7 +53,7 @@ char *pname;
 	fprintf(stderr,"\n     Valid options are:\n");
 	fprintf(stderr,"\n");
 	fprintf(stderr,"  -?              Usage ; printout this information\n");
-	fprintf(stderr,"  -c<n>           use card number n (default 1)\n"); 
+	fprintf(stderr,"  -c<n>           use card number n (default 0)\n"); 
 	fprintf(stderr,"  -F<n>           use function n (default 0)\n"); 
 	fprintf(stderr,"                    0 send and recive voice\n"); 
 	fprintf(stderr,"                    1 send touchtones\n"); 
@@ -180,7 +203,7 @@ int setup_bchannel(devinfo_t *di) {
 	}
 
 	addr.family = AF_ISDN;
-	addr.dev = di->cardnr - 1;
+	addr.dev = di->cardnr;
 	addr.channel = di->used_bchannel;
 
 	ret = bind(di->bchan, (struct sockaddr *) &addr, sizeof(addr));
@@ -1139,8 +1162,8 @@ int do_setup(devinfo_t *di) {
 	prop = 0;
 	if (VerifyOn > 8)
 		fprintf(stdout, "open_layer3(%d, %x, %x, %p, %p)\n",
-			di->cardnr - 1, protocol, prop , do_dchannel, di);
-	di->layer3 = open_layer3(di->cardnr - 1, protocol, prop , do_dchannel, di);
+			di->cardnr, protocol, prop , do_dchannel, di);
+	di->layer3 = open_layer3(di->cardnr, protocol, prop , do_dchannel, di);
 	if (VerifyOn > 8)
 		fprintf(stdout, "done\n");
 	if (!di->layer3) {
@@ -1208,7 +1231,7 @@ char *argv[];
 	fprintf(stderr,"TestmISDN 1.0\n");
 	strcpy(FileName, "test_file");
 	memset(&mISDN, 0, sizeof(mISDN));
-	mISDN.cardnr = 1;
+	mISDN.cardnr = 0;
 	strcpy(mISDN.msn, "123");
 	if (argc<1) {
 		fprintf(stderr,"Error: Not enough arguments please check\n");

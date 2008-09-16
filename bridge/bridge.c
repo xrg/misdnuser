@@ -451,7 +451,7 @@ struct mISDNport *mISDN_port_open(int port, int nt_mode, int hdlc)
 		fprintf(stderr, "Found no card. Please be sure to load card drivers.\n");
 		return(NULL);
 	}
-	if (port<0)
+	if (port < 0)
 	{
 		fprintf(stderr, "Port number cannot be negative\n");
 		return(NULL);
@@ -460,7 +460,7 @@ struct mISDNport *mISDN_port_open(int port, int nt_mode, int hdlc)
 	ret = ioctl(mISDNsocket, IMGETDEVINFO, &devinfo);
 	if (ret < 0)
 	{
-		fprintf(stderr, "Cannot get device information for port %d. (ioctl IMGETDEVINFO failed ret=%d)\n", i, ret);
+		fprintf(stderr, "Cannot get device information for port %d. (ioctl IMGETDEVINFO failed ret=%d)\n", port, ret);
 		return(NULL);
 	}
 	/* output the port info */
@@ -505,7 +505,7 @@ struct mISDNport *mISDN_port_open(int port, int nt_mode, int hdlc)
 	}
 	if (pots && !bri && !pri)
 	{
-		fprintf(stderr, "Port %d supports POTS, LCR does not!\n", port);
+		fprintf(stderr, "Port %d supports POTS, we can't!\n", port);
 		return(NULL);
 	}
 	if (!bri && !pri)
@@ -575,7 +575,7 @@ struct mISDNport *mISDN_port_open(int port, int nt_mode, int hdlc)
 	/* bind socket to dchannel */
 	memset(&addr, 0, sizeof(addr));
 	addr.family = AF_ISDN;
-	addr.dev = mISDNport->portnum-1;
+	addr.dev = mISDNport->portnum;
 	addr.channel = 0;
 	ret = bind(mISDNport->d_sock, (struct sockaddr *)&addr, sizeof(addr));
 	if (ret < 0)
@@ -611,7 +611,7 @@ struct mISDNport *mISDN_port_open(int port, int nt_mode, int hdlc)
 		/* bind socket to bchannel */
 		memset(&addr, 0, sizeof(addr));
 		addr.family = AF_ISDN;
-		addr.dev = mISDNport->portnum-1;
+		addr.dev = mISDNport->portnum;
 		addr.channel = i+1+(i>=15);
 		ret = bind(mISDNport->b_sock[i], (struct sockaddr *)&addr, sizeof(addr));
 		if (ret < 0)
@@ -688,7 +688,7 @@ int main(int argc, char *argv[])
 		usage:
 		printf("Usage: %s [--<option> [...]] te|nt <port a> te|nt <port b> \\\n"
 			" [te|nt <port c> te|nt <port d> [...]]\n\n", argv[0]);
-		printf("Example: %s --traffic te 1 nt 2 # bridges port 1 (TE-mode) with port 2 (NT-mode)\n", argv[0]);
+		printf("Example: %s --traffic te 0 nt 1 # bridges port 0 (TE-mode) with port 1 (NT-mode)\n", argv[0]);
 		printf("Bridges given pairs of ports. The number of given ports must be even.\n");
 		printf("Each pair of ports must be the same interface size (equal channel number).\n");
 		printf("Both ports may have same mode, e.g. 'te', to bridge ISDN leased line.\n");

@@ -82,7 +82,7 @@ void usage(void)
 {
 	printf("\nvalid options are:\n");
 	printf("\n");
-	printf("  --card=<n>         use card number n (default 1)\n");
+	printf("  --card=<n>         use card number n (default 0)\n");
 	printf("  --d                enable D channel stream with <n> packet sz\n");
 	printf("  --b1, --b1=<n>     enable B channel stream with <n> packet sz\n");
 	printf("  --b2, --b2=<n>     enable B channel stream with <n> packet sz\n");
@@ -246,7 +246,7 @@ int setup_bchannel(devinfo_t *di, unsigned char bch) {
 	}
 
 	di->laddr[bch].family = AF_ISDN;
-	di->laddr[bch].dev = di->cardnr - 1;
+	di->laddr[bch].dev = di->cardnr;
 	di->laddr[bch].channel = bch + 1;
 
 	ret = bind(di->layerid[bch], (struct sockaddr *) &di->laddr[bch], sizeof(di->laddr[bch]));
@@ -275,8 +275,7 @@ int activate_bchan(devinfo_t *di, unsigned char bch) {
 		return 0;
 	}
 
-	if (debug>3)
-		fprintf(stdout,"ACTIVATE_REQ sendto ret=%d\n", ret);
+        fprintf(stdout, "--> B%i -  PH_ACTIVATE_REQ\n", bch+1);
 
 	tout.tv_usec = 0;
 	tout.tv_sec = 10;
@@ -348,13 +347,13 @@ int do_setup(devinfo_t *di)
 
 	if (debug>1)
 		fprintf(stdout, "%d devices found\n", cnt);
-	if (cnt < di->cardnr) {
+	if (cnt < di->cardnr+1) {
 		fprintf(stderr, "cannot config card nr %d only %d cards\n",
 			di->cardnr, cnt);
 		return 4;
 	}
 
-	devinfo.id = di->cardnr - 1;
+	devinfo.id = di->cardnr;
 	ret = ioctl(sk, IMGETDEVINFO, &devinfo);
 	if (ret < 0) {
 		fprintf(stdout, "ioctl error %s\n", strerror(errno));
@@ -387,7 +386,7 @@ int do_setup(devinfo_t *di)
 	}
 
 	di->laddr[CHAN_D].family = AF_ISDN;
-	di->laddr[CHAN_D].dev = di->cardnr - 1;
+	di->laddr[CHAN_D].dev = di->cardnr;
 	di->laddr[CHAN_D].channel = 0;
 	ret = bind(di->layerid[CHAN_D], (struct sockaddr *) &di->laddr[CHAN_D], sizeof(di->laddr[CHAN_D]));
 
@@ -433,17 +432,18 @@ int do_setup(devinfo_t *di)
 				fprintf(stdout, "alen =%d, dev(%d) channel(%d)\n",
 					alen, di->laddr[CHAN_D].dev, di->laddr[CHAN_D].channel);
 			}
-			if (hh->prim == PH_ACTIVATE_IND) {
-				fprintf(stdout, "<-- D  -  PH_ACTIVATE_IND\n");
+			if ((hh->prim == PH_ACTIVATE_IND) || (hh->prim == PH_ACTIVATE_CNF)) {
+				if (hh->prim == PH_ACTIVATE_IND)
+					fprintf(stdout, "<-- D  -  PH_ACTIVATE_IND\n");
+				else
+					fprintf(stdout, "<-- D  -  PH_ACTIVATE_CNF\n");
 				di->ch[CHAN_D].activated = 1;
 
-				if ((di->ch[CHAN_B1].tx_ack) && (!setup_bchannel(di, CHAN_B1))) {
+				if ((di->ch[CHAN_B1].tx_ack) && (!setup_bchannel(di, CHAN_B1)))
 					activate_bchan(di, CHAN_B1);
-				}
 
-				if ((di->ch[CHAN_B2].tx_ack) && (!setup_bchannel(di, CHAN_B2))) {
+				if ((di->ch[CHAN_B2].tx_ack) && (!setup_bchannel(di, CHAN_B2)))
 					activate_bchan(di, CHAN_B2);
-				}
 
 				return 0;
 			} else {
@@ -609,7 +609,7 @@ int main_data_loop(devinfo_t *di)
 	tout.tv_usec = 0;
 	tout.tv_sec = 1;
 
-	printf ("\nwaiting for data (use CTRL-C to cancel) stop(%i)...\n", stop);
+	printf ("\nwaiting for data (use CTRL-C to cancel) stop(%i) sleep(%i)...\n", stop, usleep_val, sleep);
 	while (1)
 	{
 		for (ch_idx=0; ch_idx<MAX_CHAN; ch_idx++)
@@ -669,15 +669,6 @@ int main_data_loop(devinfo_t *di)
 							rx_buf + MISDN_HEADER_LEN);
 
 					di->ch[ch_idx].rx.pkt_cnt++;
-					if (di->ch[ch_idx].hdlc)
-						di->ch[ch_idx].tx_ack++;
-					else {
-						di->ch[ch_idx].transp_rx += ret;
-						if (di->ch[ch_idx].transp_rx >= di->ch[ch_idx].tx_size) {
-							di->ch[ch_idx].transp_rx = 0;
-							di->ch[ch_idx].tx_ack++;
-						}
-					}
 
 					/* line rate means 2 bytes crc
 					 * and 2 bytes HDLC flags overhead each packet
@@ -694,6 +685,8 @@ int main_data_loop(devinfo_t *di)
 
 					if (rx_error)
 						di->ch[ch_idx].rx.err_pkt++;
+				} else if (hhrx->prim == PH_DATA_CNF) {
+					di->ch[ch_idx].tx_ack++;
 				} else {
 					if (debug>2)
 						fprintf(stdout, "<-- %s - unhandled prim 0x%x\n",
@@ -738,11 +731,7 @@ int main_data_loop(devinfo_t *di)
 						// resurrect data pipe
 						di->ch[ch_idx].seq_num++;
 						di->ch[ch_idx].res_cnt++;
-						if (di->ch[ch_idx].hdlc)
-							di->ch[ch_idx].tx_ack += 2;
-						else
-							di->ch[ch_idx].tx_ack++;
-
+						di->ch[ch_idx].tx_ack = 1;
 						di->ch[ch_idx].idle_cnt = 0;
 					}
 				} else
@@ -780,7 +769,7 @@ int main(int argc, char *argv[])
 
 	di = &mISDN;
 	memset(&mISDN, 0, sizeof(mISDN));
-	mISDN.cardnr = 1;
+	mISDN.cardnr = 0;
 
 	for (;;) {
 		int option_index = 0;
@@ -848,9 +837,7 @@ int main(int argc, char *argv[])
 				mISDN.ch[ch_idx].tx_size = CHAN_MAX_PKT_SZ[ch_idx];
 
 			mISDN.ch[ch_idx].hdlc = (!(((ch_idx == CHAN_B1) || (ch_idx == CHAN_B2)) && btrans));
-			mISDN.ch[ch_idx].tx_ack = 2;
-			if (mISDN.ch[ch_idx].hdlc)
-				mISDN.ch[ch_idx].tx_ack++;
+			mISDN.ch[ch_idx].tx_ack = 1;
 
 			fprintf (stdout, "chan %s stream enabled with packet sz %d bytes\n",
 				 CHAN_NAMES[ch_idx], di->ch[ch_idx].tx_size);
